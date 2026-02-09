@@ -45,7 +45,7 @@ function buildCopies(product: Product, linkMode: LinkMode): CopyVariant[] {
     ? getOriginalPrice(product.price_text, product.slug)
     : null;
   const priceHighlight = originalPrice
-    ? `De ${originalPrice} por ${product.price_text}`
+    ? `~De ${originalPrice}~ por ${product.price_text}`
     : priceLine;
 
   const variants = hooks.slice(0, 3).map((hook, index) => {
