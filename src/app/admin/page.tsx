@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slugify";
 import { isValidUrl } from "@/lib/validation";
@@ -42,8 +42,12 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const formRef = useRef<HTMLDivElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const isEditing = Boolean(form.id);
+  const allSelected = products.length > 0 && selectedIds.length === products.length;
 
   const needsAttention = useMemo(() => {
     return new Set(
@@ -79,10 +83,11 @@ export default function AdminProductsPage() {
     void fetchProducts();
   }, [fetchProducts]);
 
-  const handleChange = (
-    field: keyof FormState,
-    value: string | boolean
-  ) => {
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => products.some((p) => p.id === id)));
+  }, [products]);
+
+  const handleChange = (field: keyof FormState, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -94,14 +99,14 @@ export default function AdminProductsPage() {
     const title = form.title.trim();
     const originUrl = form.origin_url.trim();
 
-    if (!title) return "Título é obrigatório.";
-    if (!originUrl) return "Link original é obrigatório.";
-    if (!isValidUrl(originUrl)) return "Link original inválido.";
+    if (!title) return "Titulo e obrigatorio.";
+    if (!originUrl) return "Link original e obrigatorio.";
+    if (!isValidUrl(originUrl)) return "Link original invalido.";
     if (form.affiliate_url && !isValidUrl(form.affiliate_url.trim())) {
-      return "Link de afiliado inválido.";
+      return "Link de afiliado invalido.";
     }
     if (form.image_url && !isValidUrl(form.image_url.trim())) {
-      return "URL da imagem inválida.";
+      return "URL da imagem invalida.";
     }
 
     return null;
@@ -125,7 +130,7 @@ export default function AdminProductsPage() {
 
     const slug = form.slug.trim() || slugify(form.title);
     if (!slug) {
-      setError("Slug inválido.");
+      setError("Slug invalido.");
       return;
     }
 
@@ -192,6 +197,11 @@ export default function AdminProductsPage() {
       category: product.category ?? "",
       is_active: product.is_active ?? false,
     });
+
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      titleInputRef.current?.focus();
+    }, 0);
   };
 
   const handleDelete = async (productId: string) => {
@@ -211,16 +221,56 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map((product) => product.id));
+    }
+  };
+
+  const handleToggleSelect = (productId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handlePublishSelected = async () => {
+    if (selectedIds.length === 0) return;
+
+    setSaving(true);
+    setError(null);
+    const { error: publishError } = await supabase
+      .from("products")
+      .update({ is_active: true })
+      .in("id", selectedIds);
+
+    if (publishError) {
+      setError(publishError.message);
+    } else {
+      setMessage(`${selectedIds.length} produtos publicados.`);
+      setSelectedIds([]);
+      await fetchProducts();
+    }
+
+    setSaving(false);
+  };
+
   return (
     <div className="space-y-10">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section
+        ref={formRef}
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
               {isEditing ? "Editar produto" : "Novo produto"}
             </h2>
             <p className="text-sm text-slate-500">
-              Preencha o mínimo para publicar. Tags separadas por vírgula.
+              Preencha o minimo para publicar. Tags separadas por virgula.
             </p>
           </div>
           {isEditing ? (
@@ -229,15 +279,16 @@ export default function AdminProductsPage() {
               onClick={resetForm}
               className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
-              Cancelar edição
+              Cancelar edicao
             </button>
           ) : null}
         </div>
         <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm font-medium text-slate-700">
-              Título
+              Titulo
               <input
+                ref={titleInputRef}
                 type="text"
                 value={form.title}
                 onChange={(event) => handleChange("title", event.target.value)}
@@ -257,7 +308,7 @@ export default function AdminProductsPage() {
             </label>
           </div>
           <label className="text-sm font-medium text-slate-700">
-            Descrição curta
+            Descricao curta
             <textarea
               value={form.description_short}
               onChange={(event) =>
@@ -269,7 +320,7 @@ export default function AdminProductsPage() {
           </label>
           <div className="grid gap-4 md:grid-cols-3">
             <label className="text-sm font-medium text-slate-700">
-              Preço
+              Preco
               <input
                 type="text"
                 value={form.price_text}
@@ -389,13 +440,30 @@ export default function AdminProductsPage() {
               Clique em editar para ajustar ou publicar.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={fetchProducts}
-            className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-          >
-            Atualizar lista
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+            >
+              {allSelected ? "Limpar selecao" : "Selecionar todos"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePublishSelected}
+              disabled={selectedIds.length === 0 || saving}
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+            >
+              Publicar selecionados ({selectedIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={fetchProducts}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+            >
+              Atualizar lista
+            </button>
+          </div>
         </div>
 
         <div className="mt-6 space-y-4">
@@ -409,6 +477,7 @@ export default function AdminProductsPage() {
           ) : null}
           {products.map((product) => {
             const attention = needsAttention.has(product.id);
+            const selected = selectedIds.includes(product.id);
             return (
               <div
                 key={product.id}
@@ -419,38 +488,49 @@ export default function AdminProductsPage() {
                 }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-900">
-                        {product.title}
-                      </h3>
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-wide ${
-                          product.is_active
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-200 text-slate-600"
-                        }`}
-                      >
-                        {product.is_active ? "Publicado" : "Rascunho"}
-                      </span>
-                      {attention ? (
-                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] uppercase tracking-wide text-amber-700">
-                          Completar imagem/categoria
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="text-sm text-slate-500">
-                      /p/{product.slug}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
-                      {(product.tags ?? []).map((tag) => (
+                  <div className="flex flex-1 items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => handleToggleSelect(product.id)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900"
+                    />
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-semibold text-slate-900">
+                          {product.title}
+                        </h3>
                         <span
-                          key={tag}
-                          className="rounded-full bg-white px-2 py-1"
+                          className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-wide ${
+                            product.is_active
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-200 text-slate-600"
+                          }`}
                         >
-                          {tag}
+                          {product.is_active ? "Publicado" : "Rascunho"}
                         </span>
-                      ))}
+                        {attention ? (
+                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] uppercase tracking-wide text-amber-700">
+                            Completar imagem/categoria
+                          </span>
+                        ) : null}
+                        {selected ? (
+                          <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] uppercase tracking-wide text-white">
+                            Selecionado
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-sm text-slate-500">/p/{product.slug}</p>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                        {(product.tags ?? []).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-white px-2 py-1"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -471,9 +551,9 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
-                  <span>Preço: {product.price_text ?? "sem preço"}</span>
-                  <span>Loja: {product.store_name ?? "—"}</span>
-                  <span>Categoria: {product.category ?? "—"}</span>
+                  <span>Preco: {product.price_text ?? "sem preco"}</span>
+                  <span>Loja: {product.store_name ?? "-"}</span>
+                  <span>Categoria: {product.category ?? "-"}</span>
                 </div>
               </div>
             );
