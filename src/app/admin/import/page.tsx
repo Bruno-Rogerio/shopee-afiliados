@@ -66,31 +66,48 @@ function parseShopeeCsv(text: string) {
   if (!headerMatches) {
     errors.push({
       line: 1,
-      message: `Cabeçalho inválido. Esperado: ${expectedHeader.join(", ")}`,
+      message: `Cabecalho invalido. Esperado: ${expectedHeader.join(", ")}`,
     });
     return { rows, errors };
   }
 
   const seenIds = new Set<string>();
+  const parsePackedRow = (value: string) => {
+    let cleaned = value.trim();
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      cleaned = cleaned.slice(1, -1);
+    }
+    cleaned = cleaned.replace(/""/g, '"');
+    return Papa.parse<string[]>(cleaned).data?.[0] ?? [];
+  };
 
   lines.slice(1).forEach((rawLine, index) => {
     const lineNumber = index + 2;
     const trimmed = rawLine.trim();
     if (!trimmed) return;
 
-    let sanitized = trimmed;
-    if (sanitized.startsWith("\"") && sanitized.endsWith("\"")) {
-      sanitized = sanitized.slice(1, -1);
-    }
-    sanitized = sanitized.replace(/""/g, "\"");
+    const parsedRaw = Papa.parse<string[]>(trimmed);
+    const rawRow = parsedRaw.data?.[0] ?? [];
+    let row: string[] = [];
 
-    const parsed = Papa.parse<string[]>(sanitized);
-    const row = parsed.data?.[0] ?? [];
+    if (rawRow.length === expectedHeader.length) {
+      const packed = rawRow.slice(1).every((value) => value === "");
+      row = packed ? parsePackedRow(rawRow[0]) : rawRow;
+    } else if (rawRow.length === 1) {
+      row = parsePackedRow(rawRow[0]);
+    } else if (
+      rawRow.length > expectedHeader.length &&
+      rawRow.slice(1).every((value) => value === "")
+    ) {
+      row = parsePackedRow(rawRow[0]);
+    } else {
+      row = rawRow;
+    }
 
     if (row.length !== expectedHeader.length) {
       errors.push({
         line: lineNumber,
-        message: `Colunas inválidas (esperado ${expectedHeader.length}).`,
+        message: `Colunas invalidas (esperado ${expectedHeader.length}).`,
       });
       return;
     }
@@ -124,11 +141,11 @@ function parseShopeeCsv(text: string) {
       return;
     }
     if (!isValidUrl(productLink)) {
-      errors.push({ line: lineNumber, message: "Product Link inválido." });
+      errors.push({ line: lineNumber, message: "Product Link invalido." });
       return;
     }
     if (offerLink && !isValidUrl(offerLink)) {
-      errors.push({ line: lineNumber, message: "Offer Link inválido." });
+      errors.push({ line: lineNumber, message: "Offer Link invalido." });
       return;
     }
     if (seenIds.has(itemId)) {
@@ -189,10 +206,7 @@ export default function AdminImportPage() {
         imported: 0,
         updated: 0,
         ignored: 0,
-        errors: [
-          ...errors,
-          { line: 0, message: existingError.message },
-        ],
+        errors: [...errors, { line: 0, message: existingError.message }],
       });
       setLoading(false);
       return;
@@ -271,7 +285,7 @@ export default function AdminImportPage() {
             Importar CSV da Shopee
           </h2>
           <p className="text-sm text-slate-500">
-            O arquivo deve conter o cabeçalho padrão e linhas encapsuladas em
+            O arquivo deve conter o cabecalho padrao e linhas encapsuladas em
             aspas.
           </p>
         </div>
@@ -296,7 +310,7 @@ export default function AdminImportPage() {
       {result ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">
-            Resultado da importação
+            Resultado da importacao
           </h3>
           <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
