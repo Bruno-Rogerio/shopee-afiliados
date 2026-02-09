@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -81,9 +81,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
               Painel admin
             </p>
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Entrar
-            </h1>
+            <h1 className="text-2xl font-semibold text-slate-900">Entrar</h1>
             <p className="text-sm text-slate-500">
               Use o usuário criado no Supabase Auth.
             </p>
@@ -129,6 +127,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
 
   const links = [
     { href: "/admin", label: "Produtos" },
+    { href: "/admin/collections", label: "Listas" },
     { href: "/admin/copys", label: "Copys" },
     { href: "/admin/import", label: "Importar CSV" },
   ];

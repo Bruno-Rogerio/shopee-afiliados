@@ -270,7 +270,7 @@ export default function AdminCopysPage() {
                           {product.title}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {product.price_text || "sem preco"}
+                          {product.price_text || "sem preço"}
                         </p>
                       </div>
                       {!product.is_active ? (

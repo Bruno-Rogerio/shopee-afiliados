@@ -22,6 +22,10 @@ type FormState = {
   is_exclusive: boolean;
   is_trending: boolean;
   is_hot: boolean;
+  featured_rank: string;
+  exclusive_rank: string;
+  trending_rank: string;
+  hot_rank: string;
   is_active: boolean;
 };
 
@@ -40,6 +44,10 @@ const emptyForm: FormState = {
   is_exclusive: false,
   is_trending: false,
   is_hot: false,
+  featured_rank: "",
+  exclusive_rank: "",
+  trending_rank: "",
+  hot_rank: "",
   is_active: false,
 };
 
@@ -127,6 +135,21 @@ export default function AdminProductsPage() {
     );
     if (invalidImage) return "URL da imagem invalida.";
 
+    const rankFields = [
+      { label: "Ordem destaque", value: form.featured_rank },
+      { label: "Ordem exclusiva", value: form.exclusive_rank },
+      { label: "Ordem em alta", value: form.trending_rank },
+      { label: "Ordem mais procurados", value: form.hot_rank },
+    ];
+
+    for (const field of rankFields) {
+      if (!field.value.trim()) continue;
+      const parsed = Number(field.value);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return `${field.label} invalida.`;
+      }
+    }
+
     return null;
   };
 
@@ -152,6 +175,13 @@ export default function AdminProductsPage() {
       return;
     }
 
+    const parseRank = (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const parsed = Number(trimmed);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
     const payload = {
       title: form.title.trim(),
       slug,
@@ -168,6 +198,10 @@ export default function AdminProductsPage() {
       is_exclusive: form.is_exclusive,
       is_trending: form.is_trending,
       is_hot: form.is_hot,
+      featured_rank: form.is_featured ? parseRank(form.featured_rank) : null,
+      exclusive_rank: form.is_exclusive ? parseRank(form.exclusive_rank) : null,
+      trending_rank: form.is_trending ? parseRank(form.trending_rank) : null,
+      hot_rank: form.is_hot ? parseRank(form.hot_rank) : null,
       is_active: form.is_active,
     };
 
@@ -230,6 +264,22 @@ export default function AdminProductsPage() {
       is_exclusive: product.is_exclusive ?? false,
       is_trending: product.is_trending ?? false,
       is_hot: product.is_hot ?? false,
+      featured_rank:
+        product.featured_rank !== null && product.featured_rank !== undefined
+          ? String(product.featured_rank)
+          : "",
+      exclusive_rank:
+        product.exclusive_rank !== null && product.exclusive_rank !== undefined
+          ? String(product.exclusive_rank)
+          : "",
+      trending_rank:
+        product.trending_rank !== null && product.trending_rank !== undefined
+          ? String(product.trending_rank)
+          : "",
+      hot_rank:
+        product.hot_rank !== null && product.hot_rank !== undefined
+          ? String(product.hot_rank)
+          : "",
       is_active: product.is_active ?? false,
     });
 
@@ -445,7 +495,7 @@ export default function AdminProductsPage() {
           </label>
           <div className="grid gap-4 md:grid-cols-3">
             <label className="text-sm font-medium text-slate-700">
-              Preco
+            Preço
               <input
                 type="text"
                 value={form.price_text}
@@ -633,6 +683,59 @@ export default function AdminProductsPage() {
               Mais procurados
             </label>
           </div>
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+            <p className="text-xs text-slate-500">
+              Defina a ordem para cada lista (quanto menor, mais alto na home).
+            </p>
+            <div className="grid gap-3 md:grid-cols-4">
+              <label className="text-sm font-medium text-slate-700">
+                Ordem destaque
+                <input
+                  type="number"
+                  min="0"
+                  value={form.featured_rank}
+                  onChange={(event) =>
+                    handleChange("featured_rank", event.target.value)
+                  }
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Ordem exclusiva
+                <input
+                  type="number"
+                  min="0"
+                  value={form.exclusive_rank}
+                  onChange={(event) =>
+                    handleChange("exclusive_rank", event.target.value)
+                  }
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Ordem em alta
+                <input
+                  type="number"
+                  min="0"
+                  value={form.trending_rank}
+                  onChange={(event) =>
+                    handleChange("trending_rank", event.target.value)
+                  }
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Ordem mais procurados
+                <input
+                  type="number"
+                  min="0"
+                  value={form.hot_rank}
+                  onChange={(event) => handleChange("hot_rank", event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                />
+              </label>
+            </div>
+          </div>
           {message ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-700">
               {message}
@@ -786,7 +889,7 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
-                  <span>Preco: {product.price_text ?? "sem preco"}</span>
+                  <span>Preço: {product.price_text ?? "sem preço"}</span>
                   <span>Loja: {product.store_name ?? "-"}</span>
                   <span>Categoria: {product.category ?? "-"}</span>
                   <span>
@@ -800,21 +903,36 @@ export default function AdminProductsPage() {
                   {product.is_featured ? (
                     <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] uppercase tracking-wide text-indigo-700">
                       destaque
+                      {product.featured_rank !== null &&
+                      product.featured_rank !== undefined
+                        ? ` #${product.featured_rank}`
+                        : ""}
                     </span>
                   ) : null}
                   {product.is_exclusive ? (
                     <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] uppercase tracking-wide text-amber-700">
                       exclusivo
+                      {product.exclusive_rank !== null &&
+                      product.exclusive_rank !== undefined
+                        ? ` #${product.exclusive_rank}`
+                        : ""}
                     </span>
                   ) : null}
                   {product.is_trending ? (
                     <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] uppercase tracking-wide text-rose-700">
                       em alta
+                      {product.trending_rank !== null &&
+                      product.trending_rank !== undefined
+                        ? ` #${product.trending_rank}`
+                        : ""}
                     </span>
                   ) : null}
                   {product.is_hot ? (
                     <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] uppercase tracking-wide text-emerald-700">
                       mais procurado
+                      {product.hot_rank !== null && product.hot_rank !== undefined
+                        ? ` #${product.hot_rank}`
+                        : ""}
                     </span>
                   ) : null}
                 </div>

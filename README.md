@@ -20,6 +20,7 @@ MVP simples para publicar produtos em vitrine publica, gerar copys para WhatsApp
    - Se ja tinha a tabela criada, rode:
      - `supabase/migrations_add_image_urls.sql`
      - `supabase/migrations_add_product_flags.sql`
+     - `supabase/migrations_add_collections.sql`
 4. Crie um usuario em Supabase Auth (Email/Password).
 5. Rode o projeto:
    - `npm run dev`
@@ -34,7 +35,8 @@ O painel permite adicionar imagens por link ou upload (via API server), criando 
 ## Como publicar um produto
 1. Acesse `/admin` e faca login.
 2. Preencha o formulario com titulo, links e (opcional) imagem/tags.
-3. Marque "Publicar agora" e salve.
+3. Defina a categoria, destaque/em alta, e a ordem se quiser priorizar na home.
+4. Marque "Publicar agora" e salve.
 
 Tambem e possivel selecionar varios produtos e clicar em "Publicar selecionados".
 
@@ -45,6 +47,16 @@ Tambem e possivel selecionar varios produtos e clicar em "Publicar selecionados"
    - Link com escolha (`/go`)
    - Link direto afiliado
 3. Clique em "Gerar copys" e use o botao "Copiar".
+
+## Listas especiais
+1. Acesse `/admin/collections`.
+2. Crie uma lista com nome, slug e descricao.
+3. Adicione produtos e ordene com as setas.
+4. A lista aparece automaticamente na home e em `/listas/[slug]`.
+
+## Categorias
+- O campo `category` dos produtos alimenta as paginas `/c` e `/c/[slug]`.
+- A home exibe as categorias com mais produtos.
 
 ## Importar CSV da Shopee
 1. Acesse `/admin/import`.
