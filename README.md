@@ -27,7 +27,7 @@ MVP simples para publicar produtos em vitrine publica, gerar copys para WhatsApp
 2. Marque o bucket como Public.
 3. Garanta que `SUPABASE_SERVICE_ROLE_KEY` esteja no `.env.local` (nao exponha no client).
 
-O painel permite adicionar imagens por link ou upload, criando um carrossel por produto.
+O painel permite adicionar imagens por link ou upload (via API server), criando um carrossel por produto.
 
 ## Como publicar um produto
 1. Acesse `/admin` e faca login.

@@ -327,34 +327,44 @@ export default function AdminProductsPage() {
   const handleUploadImage = async (file: File) => {
     setUploading(true);
     setError(null);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const dataUrl = reader.result as string;
+        const response = await fetch("/api/products/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl, fileName: file.name }),
+        });
 
-    const extension = file.name.split(".").pop() || "jpg";
-    const filePath = `manual/${crypto.randomUUID()}.${extension}`;
+        if (!response.ok) {
+          setError("Falha ao enviar imagem.");
+          setUploading(false);
+          return;
+        }
 
-    const { error: uploadError } = await supabase.storage
-      .from("product-images")
-      .upload(filePath, file, {
-        contentType: file.type || "image/jpeg",
-        upsert: true,
-      });
+        const payload = (await response.json()) as { url?: string };
+        if (!payload.url) {
+          setError("Falha ao enviar imagem.");
+          setUploading(false);
+          return;
+        }
 
-    if (uploadError) {
-      setError(uploadError.message);
+        setForm((prev) => ({
+          ...prev,
+          image_urls: [...prev.image_urls, payload.url!],
+        }));
+      } catch {
+        setError("Falha ao enviar imagem.");
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.onerror = () => {
+      setError("Falha ao ler imagem.");
       setUploading(false);
-      return;
-    }
-
-    const { data } = supabase.storage
-      .from("product-images")
-      .getPublicUrl(filePath);
-
-    const publicUrl = data.publicUrl;
-    setForm((prev) => ({
-      ...prev,
-      image_urls: [...prev.image_urls, publicUrl],
-    }));
-
-    setUploading(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
