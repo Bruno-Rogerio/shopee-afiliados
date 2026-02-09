@@ -1,4 +1,4 @@
-insert into public.products (
+﻿insert into public.products (
   slug,
   title,
   description_short,
@@ -12,6 +12,10 @@ insert into public.products (
   is_exclusive,
   is_trending,
   is_hot,
+  featured_rank,
+  exclusive_rank,
+  trending_rank,
+  hot_rank,
   is_active,
   store_name,
   category
@@ -31,6 +35,10 @@ values
     false,
     true,
     false,
+    1,
+    null,
+    2,
+    null,
     true,
     'Loja Central',
     'Acessórios'
@@ -49,6 +57,10 @@ values
     true,
     true,
     true,
+    2,
+    1,
+    1,
+    1,
     true,
     'Fit Store',
     'Wearables'
@@ -67,7 +79,44 @@ values
     false,
     true,
     true,
+    null,
+    null,
+    3,
+    2,
     true,
     'Casa Viva',
     'Casa'
+  );
+
+insert into public.collections (name, slug, description, is_active)
+values
+  (
+    'Achados Tech',
+    'achados-tech',
+    'Gadgets e eletrônicos em destaque para conversão rápida.',
+    true
+  ),
+  (
+    'Casa e Conforto',
+    'casa-e-conforto',
+    'Itens essenciais para renovar a casa com economia.',
+    true
+  );
+
+insert into public.collection_items (collection_id, product_id, sort_order)
+values
+  (
+    (select id from public.collections where slug = 'achados-tech'),
+    (select id from public.products where slug = 'fone-bluetooth-lite'),
+    1
+  ),
+  (
+    (select id from public.collections where slug = 'achados-tech'),
+    (select id from public.products where slug = 'smartwatch-fit-go'),
+    2
+  ),
+  (
+    (select id from public.collections where slug = 'casa-e-conforto'),
+    (select id from public.products where slug = 'lampada-led-eco'),
+    1
   );
