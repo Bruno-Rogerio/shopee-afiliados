@@ -17,7 +17,9 @@ MVP simples para publicar produtos em vitrine publica, gerar copys para WhatsApp
 3. No Supabase SQL editor, execute:
    - `supabase/schema.sql`
    - `supabase/seed.sql` (opcional)
-   - Se ja tinha a tabela criada, rode `supabase/migrations_add_image_urls.sql`
+   - Se ja tinha a tabela criada, rode:
+     - `supabase/migrations_add_image_urls.sql`
+     - `supabase/migrations_add_product_flags.sql`
 4. Crie um usuario em Supabase Auth (Email/Password).
 5. Rode o projeto:
    - `npm run dev`

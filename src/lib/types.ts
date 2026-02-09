@@ -12,6 +12,10 @@ export type Product = {
   tags: string[] | null;
   store_name: string | null;
   category: string | null;
+  is_featured: boolean;
+  is_exclusive: boolean;
+  is_trending: boolean;
+  is_hot: boolean;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;

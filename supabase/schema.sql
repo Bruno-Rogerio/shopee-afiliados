@@ -16,6 +16,10 @@ create table if not exists public.products (
   tags text[] not null default '{}',
   store_name text,
   category text,
+  is_featured boolean not null default false,
+  is_exclusive boolean not null default false,
+  is_trending boolean not null default false,
+  is_hot boolean not null default false,
   is_active boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -26,6 +30,18 @@ create index if not exists products_tags_idx on public.products using gin (tags)
 
 alter table public.products
 add column if not exists image_urls text[] not null default '{}';
+
+alter table public.products
+add column if not exists is_featured boolean not null default false;
+
+alter table public.products
+add column if not exists is_exclusive boolean not null default false;
+
+alter table public.products
+add column if not exists is_trending boolean not null default false;
+
+alter table public.products
+add column if not exists is_hot boolean not null default false;
 
 create table if not exists public.product_copies (
   id uuid primary key default gen_random_uuid(),

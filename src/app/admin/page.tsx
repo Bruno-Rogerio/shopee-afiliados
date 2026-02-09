@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -18,6 +18,10 @@ type FormState = {
   tags: string;
   store_name: string;
   category: string;
+  is_featured: boolean;
+  is_exclusive: boolean;
+  is_trending: boolean;
+  is_hot: boolean;
   is_active: boolean;
 };
 
@@ -32,6 +36,10 @@ const emptyForm: FormState = {
   tags: "",
   store_name: "",
   category: "",
+  is_featured: false,
+  is_exclusive: false,
+  is_trending: false,
+  is_hot: false,
   is_active: false,
 };
 
@@ -156,6 +164,10 @@ export default function AdminProductsPage() {
       tags: tagsArray,
       store_name: form.store_name.trim() || null,
       category: form.category.trim() || null,
+      is_featured: form.is_featured,
+      is_exclusive: form.is_exclusive,
+      is_trending: form.is_trending,
+      is_hot: form.is_hot,
       is_active: form.is_active,
     };
 
@@ -214,6 +226,10 @@ export default function AdminProductsPage() {
       tags: (product.tags ?? []).join(", "),
       store_name: product.store_name ?? "",
       category: product.category ?? "",
+      is_featured: product.is_featured ?? false,
+      is_exclusive: product.is_exclusive ?? false,
+      is_trending: product.is_trending ?? false,
+      is_hot: product.is_hot ?? false,
       is_active: product.is_active ?? false,
     });
 
@@ -571,6 +587,52 @@ export default function AdminProductsPage() {
             />
             Publicar agora
           </label>
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 md:grid-cols-2">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={form.is_featured}
+                onChange={(event) =>
+                  handleChange("is_featured", event.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              />
+              Destaque da home
+            </label>
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={form.is_exclusive}
+                onChange={(event) =>
+                  handleChange("is_exclusive", event.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              />
+              Lista exclusiva
+            </label>
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={form.is_trending}
+                onChange={(event) =>
+                  handleChange("is_trending", event.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              />
+              Em alta / tendencia
+            </label>
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={form.is_hot}
+                onChange={(event) =>
+                  handleChange("is_hot", event.target.checked)
+                }
+                className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              />
+              Mais procurados
+            </label>
+          </div>
           {message ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-700">
               {message}
@@ -735,6 +797,26 @@ export default function AdminProductsPage() {
                         ? 1
                         : 0}
                   </span>
+                  {product.is_featured ? (
+                    <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] uppercase tracking-wide text-indigo-700">
+                      destaque
+                    </span>
+                  ) : null}
+                  {product.is_exclusive ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] uppercase tracking-wide text-amber-700">
+                      exclusivo
+                    </span>
+                  ) : null}
+                  {product.is_trending ? (
+                    <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] uppercase tracking-wide text-rose-700">
+                      em alta
+                    </span>
+                  ) : null}
+                  {product.is_hot ? (
+                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] uppercase tracking-wide text-emerald-700">
+                      mais procurado
+                    </span>
+                  ) : null}
                 </div>
               </div>
             );

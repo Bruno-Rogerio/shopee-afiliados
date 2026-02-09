@@ -8,6 +8,10 @@ insert into public.products (
   origin_url,
   affiliate_url,
   tags,
+  is_featured,
+  is_exclusive,
+  is_trending,
+  is_hot,
   is_active,
   store_name,
   category
@@ -24,6 +28,10 @@ values
     null,
     array['audio', 'achados'],
     true,
+    false,
+    true,
+    false,
+    true,
     'Loja Central',
     'Acessórios'
   ),
@@ -38,6 +46,10 @@ values
     null,
     array['fitness', 'tech'],
     true,
+    true,
+    true,
+    true,
+    true,
     'Fit Store',
     'Wearables'
   ),
@@ -51,6 +63,10 @@ values
     'https://example.com/produtos/lampada-led-eco',
     null,
     array['casa'],
+    false,
+    false,
+    true,
+    true,
     true,
     'Casa Viva',
     'Casa'

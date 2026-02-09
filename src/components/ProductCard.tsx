@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ProductCarousel } from "@/components/ProductCarousel";
 import { getProductImages } from "@/lib/images";
 import { getOriginalPrice } from "@/lib/pricing";
@@ -14,12 +14,25 @@ export function ProductCard({ product }: ProductCardProps) {
   const originalPrice = product.price_text
     ? getOriginalPrice(product.price_text, product.slug)
     : null;
+  const badges = [
+    product.is_exclusive ? "Exclusivo" : null,
+    product.is_trending ? "Em alta" : null,
+    product.is_hot ? "Mais procurado" : null,
+  ].filter(Boolean) as string[];
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/70 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-lg">
       <ProductCarousel images={images} />
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-wide text-slate-500">
+          {badges.map((badge) => (
+            <span
+              key={badge}
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] uppercase tracking-wide text-slate-600"
+            >
+              {badge}
+            </span>
+          ))}
           {tags.slice(0, 4).map((tag) => (
             <span
               key={tag}
