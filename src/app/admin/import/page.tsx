@@ -176,6 +176,7 @@ export default function AdminImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [autoImages, setAutoImages] = useState(false);
 
   const handleImport = async () => {
     if (!file) return;
@@ -258,6 +259,7 @@ export default function AdminImportPage() {
           description_short: null,
           price_text: row.price_text,
           image_url: null,
+          image_urls: [],
           origin_url: row.origin_url,
           affiliate_url: row.affiliate_url,
           tags: ["shopee"],
@@ -273,7 +275,7 @@ export default function AdminImportPage() {
         ignored += 1;
       } else {
         imported += 1;
-        if (insertData?.id) {
+        if (insertData?.id && autoImages) {
           try {
             const response = await fetch("/api/products/enrich-image", {
               method: "POST",
@@ -291,9 +293,16 @@ export default function AdminImportPage() {
               if (payload.status === "ok") {
                 imagesFetched += 1;
               } else if (payload.error) {
+                if (payload.error !== "og_image_not_found") {
+                  errors.push({
+                    line: row.line,
+                    message: `Imagem: ${payload.error}`,
+                  });
+                }
+              } else {
                 errors.push({
                   line: row.line,
-                  message: `Imagem: ${payload.error}`,
+                  message: "Imagem: falha ao processar.",
                 });
               }
             } else {
@@ -341,6 +350,15 @@ export default function AdminImportPage() {
             onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             className="text-sm"
           />
+          <label className="flex items-center gap-2 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={autoImages}
+              onChange={(event) => setAutoImages(event.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-slate-900"
+            />
+            Buscar imagens automaticamente (beta)
+          </label>
           <button
             type="button"
             onClick={handleImport}
@@ -371,6 +389,12 @@ export default function AdminImportPage() {
               Imagens salvas: {result.imagesFetched}
             </div>
           </div>
+          {!autoImages ? (
+            <p className="mt-4 text-xs text-slate-500">
+              A busca automatica de imagens esta desativada. Adicione imagens
+              manualmente no painel de produtos.
+            </p>
+          ) : null}
           {result.errors.length > 0 ? (
             <div className="mt-6">
               <h4 className="text-sm font-semibold text-slate-900">

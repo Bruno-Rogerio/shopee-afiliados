@@ -10,6 +10,7 @@ create table if not exists public.products (
   description_short text,
   price_text text,
   image_url text,
+  image_urls text[] not null default '{}',
   origin_url text not null,
   affiliate_url text,
   tags text[] not null default '{}',
@@ -22,6 +23,9 @@ create table if not exists public.products (
 
 create index if not exists products_is_active_idx on public.products (is_active);
 create index if not exists products_tags_idx on public.products using gin (tags);
+
+alter table public.products
+add column if not exists image_urls text[] not null default '{}';
 
 create table if not exists public.product_copies (
   id uuid primary key default gen_random_uuid(),

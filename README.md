@@ -1,4 +1,4 @@
-﻿# Catalogo de Afiliados (MVP)
+# Catalogo de Afiliados (MVP)
 
 MVP simples para publicar produtos em vitrine publica, gerar copys para WhatsApp e registrar cliques de saida.
 
@@ -17,16 +17,17 @@ MVP simples para publicar produtos em vitrine publica, gerar copys para WhatsApp
 3. No Supabase SQL editor, execute:
    - `supabase/schema.sql`
    - `supabase/seed.sql` (opcional)
+   - Se ja tinha a tabela criada, rode `supabase/migrations_add_image_urls.sql`
 4. Crie um usuario em Supabase Auth (Email/Password).
 5. Rode o projeto:
    - `npm run dev`
 
-## Bucket de imagens (obrigatorio para importacao automatica)
+## Bucket de imagens (obrigatorio para uploads)
 1. No Supabase Storage, crie o bucket `product-images`.
 2. Marque o bucket como Public.
 3. Garanta que `SUPABASE_SERVICE_ROLE_KEY` esteja no `.env.local` (nao exponha no client).
 
-O importador busca `og:image` no link do produto e salva a imagem no bucket automaticamente.
+O painel permite adicionar imagens por link ou upload, criando um carrossel por produto.
 
 ## Como publicar um produto
 1. Acesse `/admin` e faca login.
@@ -57,7 +58,7 @@ Importacao:
 - Cria produtos como rascunho (`is_active=false`) com `tags=["shopee"]`.
 - Evita duplicados por `external_id`.
 - Se ja existir, atualiza somente `price_text`, `origin_url`, `affiliate_url`.
-- Tenta salvar a imagem automaticamente via `og:image`.
+- A busca automatica de imagem e opcional (beta).
 - Apos importar, complete imagem e categoria no painel.
 
 ## Tracking /out
@@ -66,6 +67,10 @@ Importacao:
 
 ## Link com escolha /go
 - `/go/[slug]` mostra duas opcoes: ver o catalogo ou seguir para o produto.
+
+## Preco "De/Por"
+- O "Por" usa o valor real do produto.
+- O "De" e calculado automaticamente com um aumento fixo (5% a 25%) para simular desconto.
 
 ## Pronto para Shopee API
 O arquivo `src/lib/linkResolver.ts` centraliza a regra de URL:

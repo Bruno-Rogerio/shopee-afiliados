@@ -6,6 +6,7 @@ export type Product = {
   description_short: string | null;
   price_text: string | null;
   image_url: string | null;
+  image_urls: string[] | null;
   origin_url: string;
   affiliate_url: string | null;
   tags: string[] | null;

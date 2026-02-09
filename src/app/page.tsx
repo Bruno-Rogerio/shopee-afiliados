@@ -10,9 +10,9 @@ export default async function Home() {
   const { data } = supabase
     ? await supabase
         .from("products")
-        .select(
-          "id, slug, title, description_short, price_text, image_url, tags, is_active"
-        )
+    .select(
+      "id, slug, title, description_short, price_text, image_url, image_urls, tags, is_active"
+    )
         .eq("is_active", true)
         .order("created_at", { ascending: false })
     : { data: [] };

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { resolveProductUrl } from "@/lib/linkResolver";
+import { getProductImages } from "@/lib/images";
+import { getOriginalPrice } from "@/lib/pricing";
+import { ProductCarousel } from "@/components/ProductCarousel";
 import type { Product } from "@/lib/types";
 
 export const revalidate = 60;
@@ -26,6 +29,10 @@ export default async function ProductPage({ params }: PageProps) {
   }
 
   const product = data as Product;
+  const images = getProductImages(product);
+  const originalPrice = product.price_text
+    ? getOriginalPrice(product.price_text, product.slug)
+    : null;
   const directLink = resolveProductUrl({
     affiliate_url: product.affiliate_url,
     origin_url: product.origin_url,
@@ -43,19 +50,8 @@ export default async function ProductPage({ params }: PageProps) {
 
         <div className="mt-6 overflow-hidden rounded-3xl border border-white/70 bg-white/80 shadow-lg backdrop-blur">
           <div className="grid gap-8 p-8 md:grid-cols-[1.1fr_1fr]">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-100">
-              {product.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={product.image_url}
-                  alt={product.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm text-slate-400">
-                  Sem imagem
-                </div>
-              )}
+            <div className="overflow-hidden rounded-2xl">
+              <ProductCarousel images={images} />
             </div>
 
             <div className="flex flex-col justify-between gap-6">
@@ -80,8 +76,17 @@ export default async function ProductPage({ params }: PageProps) {
               </div>
 
               <div className="space-y-4">
-                <div className="text-2xl font-semibold text-slate-900">
-                  {product.price_text || "Consulte o preço"}
+                <div className="space-y-1">
+                  {originalPrice ? (
+                    <p className="text-xs text-slate-400 line-through">
+                      De {originalPrice}
+                    </p>
+                  ) : null}
+                  <div className="text-2xl font-semibold text-slate-900">
+                    {product.price_text
+                      ? `Por ${product.price_text}`
+                      : "Consulte o preco"}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <Link

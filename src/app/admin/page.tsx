@@ -12,7 +12,7 @@ type FormState = {
   slug: string;
   description_short: string;
   price_text: string;
-  image_url: string;
+  image_urls: string[];
   origin_url: string;
   affiliate_url: string;
   tags: string;
@@ -26,7 +26,7 @@ const emptyForm: FormState = {
   slug: "",
   description_short: "",
   price_text: "",
-  image_url: "",
+  image_urls: [],
   origin_url: "",
   affiliate_url: "",
   tags: "",
@@ -44,6 +44,8 @@ export default function AdminProductsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [uploading, setUploading] = useState(false);
   const formRef = useRef<HTMLDivElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -54,10 +56,15 @@ export default function AdminProductsPage() {
     return new Set(
       products
         .filter(
-          (product) =>
-            !product.is_active &&
-            product.external_id &&
-            (!product.image_url || !product.category)
+          (product) => {
+            const hasImage =
+              (product.image_urls?.length ?? 0) > 0 || product.image_url;
+            return (
+              !product.is_active &&
+              product.external_id &&
+              (!hasImage || !product.category)
+            );
+          }
         )
         .map((product) => product.id)
     );
@@ -94,6 +101,7 @@ export default function AdminProductsPage() {
 
   const resetForm = () => {
     setForm(emptyForm);
+    setImageUrlInput("");
   };
 
   const validateForm = () => {
@@ -106,9 +114,10 @@ export default function AdminProductsPage() {
     if (form.affiliate_url && !isValidUrl(form.affiliate_url.trim())) {
       return "Link de afiliado invalido.";
     }
-    if (form.image_url && !isValidUrl(form.image_url.trim())) {
-      return "URL da imagem invalida.";
-    }
+    const invalidImage = form.image_urls.find(
+      (url) => url && !isValidUrl(url)
+    );
+    if (invalidImage) return "URL da imagem invalida.";
 
     return null;
   };
@@ -140,7 +149,8 @@ export default function AdminProductsPage() {
       slug,
       description_short: form.description_short.trim() || null,
       price_text: form.price_text.trim() || null,
-      image_url: form.image_url.trim() || null,
+      image_urls: form.image_urls,
+      image_url: form.image_urls[0] ?? null,
       origin_url: form.origin_url.trim(),
       affiliate_url: form.affiliate_url.trim() || null,
       tags: tagsArray,
@@ -162,6 +172,7 @@ export default function AdminProductsPage() {
       } else {
         setMessage("Produto atualizado.");
         resetForm();
+        setImageUrlInput("");
         await fetchProducts();
       }
     } else {
@@ -174,6 +185,7 @@ export default function AdminProductsPage() {
       } else {
         setMessage("Produto criado.");
         resetForm();
+        setImageUrlInput("");
         await fetchProducts();
       }
     }
@@ -184,13 +196,19 @@ export default function AdminProductsPage() {
   const handleEdit = (product: Product) => {
     setMessage(null);
     setError(null);
+    setImageUrlInput("");
     setForm({
       id: product.id,
       title: product.title ?? "",
       slug: product.slug ?? "",
       description_short: product.description_short ?? "",
       price_text: product.price_text ?? "",
-      image_url: product.image_url ?? "",
+      image_urls:
+        product.image_urls && product.image_urls.length > 0
+          ? product.image_urls
+          : product.image_url
+            ? [product.image_url]
+            : [],
       origin_url: product.origin_url ?? "",
       affiliate_url: product.affiliate_url ?? "",
       tags: (product.tags ?? []).join(", "),
@@ -283,6 +301,60 @@ export default function AdminProductsPage() {
     }
 
     setDeleting(false);
+  };
+
+  const handleAddImageUrl = () => {
+    const trimmed = imageUrlInput.trim();
+    if (!trimmed) return;
+    if (!isValidUrl(trimmed)) {
+      setError("URL da imagem invalida.");
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      image_urls: [...prev.image_urls, trimmed],
+    }));
+    setImageUrlInput("");
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      image_urls: prev.image_urls.filter((_, idx) => idx !== index),
+    }));
+  };
+
+  const handleUploadImage = async (file: File) => {
+    setUploading(true);
+    setError(null);
+
+    const extension = file.name.split(".").pop() || "jpg";
+    const filePath = `manual/${crypto.randomUUID()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("product-images")
+      .upload(filePath, file, {
+        contentType: file.type || "image/jpeg",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      setError(uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(filePath);
+
+    const publicUrl = data.publicUrl;
+    setForm((prev) => ({
+      ...prev,
+      image_urls: [...prev.image_urls, publicUrl],
+    }));
+
+    setUploading(false);
   };
 
   return (
@@ -381,13 +453,69 @@ export default function AdminProductsPage() {
             </label>
           </div>
           <label className="text-sm font-medium text-slate-700">
-            URL da imagem
-            <input
-              type="url"
-              value={form.image_url}
-              onChange={(event) => handleChange("image_url", event.target.value)}
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
-            />
+            Imagens (carrossel)
+            <div className="mt-2 flex flex-wrap gap-3">
+              <div className="flex flex-1 gap-2">
+                <input
+                  type="url"
+                  value={imageUrlInput}
+                  onChange={(event) => setImageUrlInput(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                  placeholder="Cole a URL da imagem"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddImageUrl}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                >
+                  Adicionar
+                </button>
+              </div>
+              <label className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) {
+                      void handleUploadImage(file);
+                    }
+                    event.currentTarget.value = "";
+                  }}
+                  disabled={uploading}
+                />
+                {uploading ? "Enviando..." : "Enviar arquivo"}
+              </label>
+            </div>
+            {form.image_urls.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-3">
+                {form.image_urls.map((url, index) => (
+                  <div
+                    key={`${url}-${index}`}
+                    className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-2"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt="Imagem enviada"
+                      className="h-12 w-12 rounded-xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="text-[11px] text-rose-600"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-slate-500">
+                Adicione uma ou mais imagens para o carrossel.
+              </p>
+            )}
           </label>
           <label className="text-sm font-medium text-slate-700">
             Link original
@@ -589,6 +717,14 @@ export default function AdminProductsPage() {
                   <span>Preco: {product.price_text ?? "sem preco"}</span>
                   <span>Loja: {product.store_name ?? "-"}</span>
                   <span>Categoria: {product.category ?? "-"}</span>
+                  <span>
+                    Imagens:{" "}
+                    {(product.image_urls?.length ?? 0) > 0
+                      ? product.image_urls?.length
+                      : product.image_url
+                        ? 1
+                        : 0}
+                  </span>
                 </div>
               </div>
             );
