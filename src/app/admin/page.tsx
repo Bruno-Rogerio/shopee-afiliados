@@ -39,6 +39,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -258,6 +259,32 @@ export default function AdminProductsPage() {
     setSaving(false);
   };
 
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmed = window.confirm(
+      `Deseja remover ${selectedIds.length} produtos?`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError(null);
+
+    const { error: deleteError } = await supabase
+      .from("products")
+      .delete()
+      .in("id", selectedIds);
+
+    if (deleteError) {
+      setError(deleteError.message);
+    } else {
+      setMessage(`${selectedIds.length} produtos removidos.`);
+      setSelectedIds([]);
+      await fetchProducts();
+    }
+
+    setDeleting(false);
+  };
+
   return (
     <div className="space-y-10">
       <section
@@ -455,6 +482,14 @@ export default function AdminProductsPage() {
               className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             >
               Publicar selecionados ({selectedIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteSelected}
+              disabled={selectedIds.length === 0 || deleting}
+              className="rounded-full border border-rose-200 px-4 py-2 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700 disabled:opacity-60"
+            >
+              Excluir selecionados ({selectedIds.length})
             </button>
             <button
               type="button"
