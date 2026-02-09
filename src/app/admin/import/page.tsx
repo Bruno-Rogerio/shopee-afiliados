@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Papa from "papaparse";
@@ -37,6 +37,7 @@ type ImportResult = {
   imported: number;
   updated: number;
   ignored: number;
+  imagesFetched: number;
   errors: ImportError[];
 };
 
@@ -189,6 +190,7 @@ export default function AdminImportPage() {
         imported: 0,
         updated: 0,
         ignored: 0,
+        imagesFetched: 0,
         errors,
       });
       setLoading(false);
@@ -206,6 +208,7 @@ export default function AdminImportPage() {
         imported: 0,
         updated: 0,
         ignored: 0,
+        imagesFetched: 0,
         errors: [...errors, { line: 0, message: existingError.message }],
       });
       setLoading(false);
@@ -219,6 +222,7 @@ export default function AdminImportPage() {
     let imported = 0;
     let updated = 0;
     let ignored = 0;
+    let imagesFetched = 0;
 
     for (const row of rows) {
       const existingId = existingMap.get(row.external_id);
@@ -245,26 +249,66 @@ export default function AdminImportPage() {
         ? `${baseSlug}-${row.external_id}`
         : row.external_id;
 
-      const { error: insertError } = await supabase.from("products").insert({
-        external_id: row.external_id,
-        title: row.title,
-        slug,
-        description_short: null,
-        price_text: row.price_text,
-        image_url: null,
-        origin_url: row.origin_url,
-        affiliate_url: row.affiliate_url,
-        tags: ["shopee"],
-        store_name: row.store_name || null,
-        category: null,
-        is_active: false,
-      });
+      const { data: insertData, error: insertError } = await supabase
+        .from("products")
+        .insert({
+          external_id: row.external_id,
+          title: row.title,
+          slug,
+          description_short: null,
+          price_text: row.price_text,
+          image_url: null,
+          origin_url: row.origin_url,
+          affiliate_url: row.affiliate_url,
+          tags: ["shopee"],
+          store_name: row.store_name || null,
+          category: null,
+          is_active: false,
+        })
+        .select("id")
+        .single();
 
       if (insertError) {
         errors.push({ line: row.line, message: insertError.message });
         ignored += 1;
       } else {
         imported += 1;
+        if (insertData?.id) {
+          try {
+            const response = await fetch("/api/products/enrich-image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId: insertData.id,
+                originUrl: row.origin_url,
+              }),
+            });
+            if (response.ok) {
+              const payload = (await response.json()) as {
+                status?: string;
+                error?: string;
+              };
+              if (payload.status === "ok") {
+                imagesFetched += 1;
+              } else if (payload.error) {
+                errors.push({
+                  line: row.line,
+                  message: `Imagem: ${payload.error}`,
+                });
+              }
+            } else {
+              errors.push({
+                line: row.line,
+                message: "Falha ao buscar imagem.",
+              });
+            }
+          } catch {
+            errors.push({
+              line: row.line,
+              message: "Falha ao buscar imagem.",
+            });
+          }
+        }
       }
     }
 
@@ -272,6 +316,7 @@ export default function AdminImportPage() {
       imported,
       updated,
       ignored,
+      imagesFetched,
       errors,
     });
     setLoading(false);
@@ -312,7 +357,7 @@ export default function AdminImportPage() {
           <h3 className="text-base font-semibold text-slate-900">
             Resultado da importacao
           </h3>
-          <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               Importados: {result.imported}
             </div>
@@ -321,6 +366,9 @@ export default function AdminImportPage() {
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               Ignorados: {result.ignored}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              Imagens salvas: {result.imagesFetched}
             </div>
           </div>
           {result.errors.length > 0 ? (
