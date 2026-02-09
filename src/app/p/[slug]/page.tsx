@@ -89,12 +89,13 @@ export default async function ProductPage({ params }: PageProps) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Link
+                  <a
                     href={`/out/${product.slug}`}
                     className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    rel="nofollow"
                   >
                     Ir para oferta
-                  </Link>
+                  </a>
                   <a
                     href={directLink}
                     className="rounded-full border border-slate-200 px-6 py-3 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"

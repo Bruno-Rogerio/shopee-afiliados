@@ -60,12 +60,13 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             Ver detalhes
           </Link>
-          <Link
+          <a
             href={`/out/${product.slug}`}
             className="flex-1 rounded-full bg-slate-900 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+            rel="nofollow"
           >
             Ir para oferta
-          </Link>
+          </a>
         </div>
       </div>
     </article>

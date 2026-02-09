@@ -2,20 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { getOriginalPrice } from "@/lib/pricing";
 import type { CopyVariant, Product } from "@/lib/types";
 
 type LinkMode = "out" | "affiliate" | "choice";
 
 const hooks = [
-  "Achado do dia:",
-  "Oferta relampago:",
-  "Promocao que vale agora:",
+  "🔥 Achado do dia:",
+  "⚡ Oferta relampago:",
+  "💥 Promocao imperdivel:",
 ];
 
 const benefitSets = [
-  ["- Otimo custo-beneficio", "- Ideal para o dia a dia"],
-  ["- Estoque limitado", "- Compra rapida e segura"],
-  ["- Produto bem avaliado", "- Pratico e funcional"],
+  ["✅ Otimo custo-beneficio", "✅ Ideal para o dia a dia"],
+  ["✅ Estoque limitado", "✅ Compra rapida e segura"],
+  ["✅ Produto bem avaliado", "✅ Pratico e funcional"],
 ];
 
 const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
@@ -40,6 +41,12 @@ function buildCopies(product: Product, linkMode: LinkMode): CopyVariant[] {
   }
 
   const priceLine = product.price_text ? product.price_text : "";
+  const originalPrice = product.price_text
+    ? getOriginalPrice(product.price_text, product.slug)
+    : null;
+  const priceHighlight = originalPrice
+    ? `De ${originalPrice} por ${product.price_text}`
+    : priceLine;
 
   const variants = hooks.slice(0, 3).map((hook, index) => {
     const benefits = benefitSets[index] ?? benefitSets[0];
@@ -47,8 +54,8 @@ function buildCopies(product: Product, linkMode: LinkMode): CopyVariant[] {
       `${hook} ${product.title}`,
       benefits[0],
       benefits[1],
-      priceLine,
-      `Chama no link: ${link}`,
+      priceHighlight,
+      `👉 Chama no link: ${link}`,
     ].filter(Boolean);
 
     return {
@@ -58,8 +65,8 @@ function buildCopies(product: Product, linkMode: LinkMode): CopyVariant[] {
   });
 
   const shortLines = [
-    `${product.title}${priceLine ? ` • ${priceLine}` : ""}`,
-    `Link direto: ${link}`,
+    `${product.title}${priceHighlight ? ` • ${priceHighlight}` : ""}`,
+    `🔗 Link direto: ${link}`,
   ];
 
   variants.push({

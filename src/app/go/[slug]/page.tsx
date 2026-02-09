@@ -76,12 +76,13 @@ export default async function GoPage({ params, searchParams }: PageProps) {
               >
                 Ver catalogo completo
               </Link>
-              <Link
+              <a
                 href={outUrl}
                 className="rounded-2xl bg-slate-900 px-5 py-4 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+                rel="nofollow"
               >
                 Ir para o produto na Shopee
-              </Link>
+              </a>
             </div>
 
             <p className="text-xs text-slate-500">
