@@ -1,23 +1,44 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import type { CopyVariant, Product } from "@/lib/types";
 
+type LinkMode = "out" | "affiliate" | "choice";
+
 const hooks = [
   "Achado do dia:",
-  "Oferta relâmpago:",
-  "Promoção que vale agora:",
+  "Oferta relampago:",
+  "Promocao que vale agora:",
 ];
 
 const benefitSets = [
-  ["✅ Ótimo custo-benefício", "✅ Ideal para o dia a dia"],
-  ["✅ Estoque limitado", "✅ Compra rápida e segura"],
-  ["✅ Produto bem avaliado", "✅ Prático e funcional"],
+  ["- Otimo custo-beneficio", "- Ideal para o dia a dia"],
+  ["- Estoque limitado", "- Compra rapida e segura"],
+  ["- Produto bem avaliado", "- Pratico e funcional"],
 ];
 
-function buildCopies(product: Product): CopyVariant[] {
-  const link = `/out/${product.slug}?src=whats&camp=default`;
+const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+
+function buildInternalLink(path: string) {
+  return baseUrl ? `${baseUrl}${path}` : path;
+}
+
+function buildCopies(product: Product, linkMode: LinkMode): CopyVariant[] {
+  let link = "";
+
+  if (linkMode === "affiliate") {
+    link = product.affiliate_url || product.origin_url || "";
+  } else if (linkMode === "choice") {
+    link = buildInternalLink(`/go/${product.slug}?src=whats&camp=default`);
+  } else {
+    link = buildInternalLink(`/out/${product.slug}?src=whats&camp=default`);
+  }
+
+  if (!link) {
+    link = buildInternalLink(`/out/${product.slug}?src=whats&camp=default`);
+  }
+
   const priceLine = product.price_text ? product.price_text : "";
 
   const variants = hooks.slice(0, 3).map((hook, index) => {
@@ -57,6 +78,7 @@ export default function AdminCopysPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [linkMode, setLinkMode] = useState<LinkMode>("out");
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === selectedId) ?? null,
@@ -67,7 +89,7 @@ export default function AdminCopysPage() {
     setLoading(true);
     const { data, error: fetchError } = await supabase
       .from("products")
-      .select("id, title, slug, price_text, is_active")
+      .select("id, title, slug, price_text, is_active, affiliate_url, origin_url")
       .order("created_at", { ascending: false });
 
     if (fetchError) {
@@ -90,7 +112,7 @@ export default function AdminCopysPage() {
     setMessage(null);
     setError(null);
 
-    const generated = buildCopies(selectedProduct);
+    const generated = buildCopies(selectedProduct, linkMode);
     setCopies(generated);
 
     setSaving(true);
@@ -114,8 +136,18 @@ export default function AdminCopysPage() {
 
   const handleCopy = async (content: string) => {
     await navigator.clipboard.writeText(content);
-    setMessage("Copiado para a área de transferência.");
+    setMessage("Copiado para a area de transferencia.");
   };
+
+  const showDraftWarning =
+    selectedProduct &&
+    !selectedProduct.is_active &&
+    (linkMode === "out" || linkMode === "choice");
+
+  const showAffiliateWarning =
+    selectedProduct &&
+    linkMode === "affiliate" &&
+    !selectedProduct.affiliate_url;
 
   return (
     <div className="space-y-8">
@@ -126,7 +158,7 @@ export default function AdminCopysPage() {
               Gerador de copys
             </h2>
             <p className="text-sm text-slate-500">
-              Selecione um produto e gere 3 variações WhatsApp + 1 curta.
+              Selecione um produto e gere 3 variacoes WhatsApp + 1 curta.
             </p>
           </div>
           <button
@@ -141,7 +173,7 @@ export default function AdminCopysPage() {
         {loading ? (
           <p className="mt-6 text-sm text-slate-500">Carregando produtos...</p>
         ) : (
-          <div className="mt-6 flex flex-wrap items-center gap-4">
+          <div className="mt-6 grid gap-4 lg:grid-cols-[auto_auto_1fr] lg:items-center">
             <select
               value={selectedId}
               onChange={(event) => setSelectedId(event.target.value)}
@@ -152,6 +184,15 @@ export default function AdminCopysPage() {
                   {product.title} {product.is_active ? "" : "(rascunho)"}
                 </option>
               ))}
+            </select>
+            <select
+              value={linkMode}
+              onChange={(event) => setLinkMode(event.target.value as LinkMode)}
+              className="min-w-[240px] rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            >
+              <option value="out">Link com tracking (/out)</option>
+              <option value="choice">Link com escolha (/go)</option>
+              <option value="affiliate">Link direto afiliado</option>
             </select>
             <button
               type="button"
@@ -164,6 +205,16 @@ export default function AdminCopysPage() {
           </div>
         )}
 
+        {showDraftWarning ? (
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+            Produto em rascunho. Publique para o link funcionar.
+          </div>
+        ) : null}
+        {showAffiliateWarning ? (
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+            Sem link de afiliado. Usando link original.
+          </div>
+        ) : null}
         {message ? (
           <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-700">
             {message}
