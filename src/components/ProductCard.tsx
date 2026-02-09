@@ -62,7 +62,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="text-base font-semibold text-slate-900">
               {product.price_text
                 ? `Por ${product.price_text}`
-                : "Consulte o preco"}
+                : "Consulte o preço"}
             </div>
           </div>
         </div>

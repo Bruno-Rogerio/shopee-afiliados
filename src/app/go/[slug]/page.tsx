@@ -64,7 +64,7 @@ export default async function GoPage({ params, searchParams }: PageProps) {
                   {product.title}
                 </h1>
                 <p className="text-sm text-slate-500">
-                  {product.price_text || "Consulte o preco"}
+                  {product.price_text || "Consulte o preço"}
                 </p>
               </div>
             </div>
@@ -74,7 +74,7 @@ export default async function GoPage({ params, searchParams }: PageProps) {
                 href="/"
                 className="rounded-2xl border border-slate-200 px-5 py-4 text-center text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
               >
-                Ver catalogo completo
+                Ver catálogo completo
               </Link>
               <a
                 href={outUrl}

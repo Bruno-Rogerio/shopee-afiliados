@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { resolveProductUrl } from "@/lib/linkResolver";
@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: PageProps) {
                   <div className="text-2xl font-semibold text-slate-900">
                     {product.price_text
                       ? `Por ${product.price_text}`
-                      : "Consulte o preco"}
+                      : "Consulte o preço"}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
