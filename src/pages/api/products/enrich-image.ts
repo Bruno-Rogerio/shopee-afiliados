@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET = "product-images";
@@ -24,39 +24,47 @@ function normalizeUrl(rawUrl: string, baseUrl: string) {
   return rawUrl;
 }
 
-export async function POST(request: NextRequest) {
-  const admin = createAdminClient();
-  if (!admin) {
-    return NextResponse.json(
-      { error: "missing_service_role" },
-      { status: 500 }
-    );
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method === "GET") {
+    return res.status(200).json({ status: "ok", method: "GET" });
   }
 
-  const body = (await request.json()) as {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "method_not_allowed" });
+  }
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return res.status(500).json({ error: "missing_service_role" });
+  }
+
+  const { productId, originUrl } = req.body as {
     productId?: string;
     originUrl?: string;
   };
 
-  if (!body.productId || !body.originUrl) {
-    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+  if (!productId || !originUrl) {
+    return res.status(400).json({ error: "invalid_payload" });
   }
 
   const { data: product, error: productError } = await admin
     .from("products")
     .select("image_url")
-    .eq("id", body.productId)
+    .eq("id", productId)
     .single();
 
   if (productError) {
-    return NextResponse.json({ error: productError.message }, { status: 500 });
+    return res.status(500).json({ error: productError.message });
   }
 
   if (product?.image_url) {
-    return NextResponse.json({ status: "skipped" });
+    return res.status(200).json({ status: "skipped" });
   }
 
-  const htmlResponse = await fetch(body.originUrl, {
+  const htmlResponse = await fetch(originUrl, {
     headers: {
       "user-agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
@@ -64,25 +72,19 @@ export async function POST(request: NextRequest) {
   });
 
   if (!htmlResponse.ok) {
-    return NextResponse.json(
-      { error: "page_fetch_failed" },
-      { status: 400 }
-    );
+    return res.status(400).json({ error: "page_fetch_failed" });
   }
 
   const html = await htmlResponse.text();
   const ogImage = extractOgImage(html);
   if (!ogImage) {
-    return NextResponse.json({ error: "og_image_not_found" }, { status: 404 });
+    return res.status(404).json({ error: "og_image_not_found" });
   }
 
-  const imageUrl = normalizeUrl(ogImage, body.originUrl);
+  const imageUrl = normalizeUrl(ogImage, originUrl);
   const imageResponse = await fetch(imageUrl);
   if (!imageResponse.ok) {
-    return NextResponse.json(
-      { error: "image_fetch_failed" },
-      { status: 400 }
-    );
+    return res.status(400).json({ error: "image_fetch_failed" });
   }
 
   const contentType =
@@ -96,14 +98,14 @@ export async function POST(request: NextRequest) {
         : "jpg";
 
   const buffer = Buffer.from(await imageResponse.arrayBuffer());
-  const filePath = `${body.productId}/${Date.now()}.${extension}`;
+  const filePath = `${productId}/${Date.now()}.${extension}`;
 
   const { error: uploadError } = await admin.storage
     .from(BUCKET)
     .upload(filePath, buffer, { contentType, upsert: true });
 
   if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    return res.status(500).json({ error: uploadError.message });
   }
 
   const { data: publicData } = admin.storage
@@ -115,11 +117,11 @@ export async function POST(request: NextRequest) {
   const { error: updateError } = await admin
     .from("products")
     .update({ image_url: publicUrl })
-    .eq("id", body.productId);
+    .eq("id", productId);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    return res.status(500).json({ error: updateError.message });
   }
 
-  return NextResponse.json({ status: "ok", imageUrl: publicUrl });
+  return res.status(200).json({ status: "ok", imageUrl: publicUrl });
 }
