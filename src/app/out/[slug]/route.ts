@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { resolveProductUrl } from "@/lib/linkResolver";
 
-type RouteContext = {
-  params: { slug: string };
-};
-
-export async function GET(request: Request, { params }: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await context.params;
   const supabase = createServerClient();
   if (!supabase) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: RouteContext) {
   const { data } = await supabase
     .from("products")
     .select("id, slug, origin_url, affiliate_url, is_active")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .eq("is_active", true)
     .single();
 

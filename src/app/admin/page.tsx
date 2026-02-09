@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slugify";
 import { isValidUrl } from "@/lib/validation";
@@ -58,7 +58,7 @@ export default function AdminProductsPage() {
     );
   }, [products]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     const { data, error: fetchError } = await supabase
@@ -73,11 +73,11 @@ export default function AdminProductsPage() {
     }
 
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     void fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   const handleChange = (
     field: keyof FormState,

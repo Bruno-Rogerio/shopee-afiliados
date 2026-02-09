@@ -99,10 +99,10 @@ function parseShopeeCsv(text: string) {
       itemId,
       itemName,
       price,
-      _sales,
+      ,
       shopName,
-      _commissionRate,
-      _commission,
+      ,
+      ,
       productLink,
       offerLink,
     ] = row.map((value) => value.trim());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import type { CopyVariant, Product } from "@/lib/types";
 
@@ -63,7 +63,7 @@ export default function AdminCopysPage() {
     [products, selectedId]
   );
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     const { data, error: fetchError } = await supabase
       .from("products")
@@ -79,11 +79,11 @@ export default function AdminCopysPage() {
       }
     }
     setLoading(false);
-  };
+  }, [selectedId]);
 
   useEffect(() => {
     void fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   const handleGenerate = async () => {
     if (!selectedProduct) return;
