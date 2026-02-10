@@ -7,7 +7,7 @@ import { getProductImages } from "@/lib/images";
 import { slugify } from "@/lib/slugify";
 import type { CopyVariant, Product } from "@/lib/types";
 
-type LinkMode = "out" | "affiliate" | "choice";
+type LinkMode = "out" | "affiliate";
 type CopyChannel = "whatsapp" | "instagram" | "stories";
 type CopyTone = "direct" | "enthusiastic" | "premium";
 type CopyUrgency = "low" | "medium" | "high";
@@ -153,8 +153,6 @@ function buildCopies(
 
   if (linkMode === "affiliate") {
     link = product.affiliate_url || product.origin_url || "";
-  } else if (linkMode === "choice") {
-    link = buildInternalLink(`/go/${product.slug}?src=whats&camp=default`);
   } else {
     link = buildInternalLink(`/out/${product.slug}?src=whats&camp=default`);
   }
@@ -168,10 +166,14 @@ function buildCopies(
   const hookList = hooksByTone[tone];
   const urgencyLine = urgencyLines[urgency];
 
-  const tagHint = product.tags?.[0]
-    ? `✅ Ideal para ${product.tags[0]}`
-    : product.category
-      ? `✅ Categoria: ${product.category}`
+  const safeTag =
+    (product.tags ?? []).find(
+      (tag) => tag && tag.toLowerCase() !== "shopee"
+    ) ?? "";
+  const tagHint = product.category
+    ? `✅ Categoria: ${product.category}`
+    : safeTag
+      ? `✅ Categoria: ${safeTag}`
       : "";
 
   const benefit1 = tagHint || pickFrom(benefitPool, baseSeed, 1);
@@ -338,9 +340,7 @@ export default function AdminCopysPage() {
   };
 
   const showDraftWarning =
-    selectedProduct &&
-    !selectedProduct.is_active &&
-    (linkMode === "out" || linkMode === "choice");
+    selectedProduct && !selectedProduct.is_active && linkMode === "out";
 
   const showAffiliateWarning =
     selectedProduct && linkMode === "affiliate" && !selectedProduct.affiliate_url;
@@ -384,7 +384,6 @@ export default function AdminCopysPage() {
                 className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="out">Link com tracking (/out)</option>
-                <option value="choice">Link com escolha (/go)</option>
                 <option value="affiliate">Link direto afiliado</option>
               </select>
               <select

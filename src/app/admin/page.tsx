@@ -51,6 +51,19 @@ const emptyForm: FormState = {
   is_active: false,
 };
 
+const categoryOptions = [
+  "Tech",
+  "Casa e decoração",
+  "Pet",
+  "Automóveis",
+  "Beleza e saúde",
+  "Eletrônicos",
+  "Eletrodomésticos",
+  "Games",
+  "Produtos de Limpeza",
+  "Alimentos",
+];
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,13 +73,36 @@ export default function AdminProductsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft"
+  >("all");
+  const [bulkCategory, setBulkCategory] = useState("");
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const formRef = useRef<HTMLDivElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const isEditing = Boolean(form.id);
-  const allSelected = products.length > 0 && selectedIds.length === products.length;
+
+  const filteredProducts = useMemo(() => {
+    if (statusFilter === "published") {
+      return products.filter((product) => product.is_active);
+    }
+    if (statusFilter === "draft") {
+      return products.filter((product) => !product.is_active);
+    }
+    return products;
+  }, [products, statusFilter]);
+
+  const publishedCount = useMemo(
+    () => products.filter((product) => product.is_active).length,
+    [products]
+  );
+  const draftCount = products.length - publishedCount;
+
+  const allSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((product) => selectedIds.includes(product.id));
 
   const needsAttention = useMemo(() => {
     return new Set(
@@ -308,9 +344,14 @@ export default function AdminProductsPage() {
 
   const handleSelectAll = () => {
     if (allSelected) {
-      setSelectedIds([]);
+      const visibleIds = new Set(filteredProducts.map((product) => product.id));
+      setSelectedIds((prev) => prev.filter((id) => !visibleIds.has(id)));
     } else {
-      setSelectedIds(products.map((product) => product.id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filteredProducts.forEach((product) => next.add(product.id));
+        return Array.from(next);
+      });
     }
   };
 
@@ -337,6 +378,34 @@ export default function AdminProductsPage() {
     } else {
       setMessage(`${selectedIds.length} produtos publicados.`);
       setSelectedIds([]);
+      await fetchProducts();
+    }
+
+    setSaving(false);
+  };
+
+  const handleApplyCategorySelected = async () => {
+    if (selectedIds.length === 0) return;
+    if (!bulkCategory.trim()) {
+      setError("Selecione uma categoria para aplicar.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    const { error: updateError } = await supabase
+      .from("products")
+      .update({ category: bulkCategory })
+      .in("id", selectedIds);
+
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setMessage(
+        `Categoria aplicada em ${selectedIds.length} produtos.`
+      );
+      setBulkCategory("");
       await fetchProducts();
     }
 
@@ -507,14 +576,20 @@ export default function AdminProductsPage() {
             </label>
             <label className="text-sm font-medium text-slate-700">
               Categoria
-              <input
-                type="text"
+              <select
                 value={form.category}
                 onChange={(event) =>
                   handleChange("category", event.target.value)
                 }
                 className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
-              />
+              >
+                <option value="">Sem categoria</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="text-sm font-medium text-slate-700">
               Loja
@@ -771,12 +846,67 @@ export default function AdminProductsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("all")}
+                className={`rounded-full px-3 py-1.5 transition ${
+                  statusFilter === "all"
+                    ? "bg-slate-900 text-white"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                Todos ({products.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("published")}
+                className={`rounded-full px-3 py-1.5 transition ${
+                  statusFilter === "published"
+                    ? "bg-slate-900 text-white"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                Publicados ({publishedCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("draft")}
+                className={`rounded-full px-3 py-1.5 transition ${
+                  statusFilter === "draft"
+                    ? "bg-slate-900 text-white"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                Rascunhos ({draftCount})
+              </button>
+            </div>
             <button
               type="button"
               onClick={handleSelectAll}
               className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
               {allSelected ? "Limpar selecao" : "Selecionar todos"}
+            </button>
+            <select
+              value={bulkCategory}
+              onChange={(event) => setBulkCategory(event.target.value)}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 focus:border-slate-400 focus:outline-none"
+            >
+              <option value="">Categoria em massa</option>
+              {categoryOptions.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleApplyCategorySelected}
+              disabled={selectedIds.length === 0 || !bulkCategory || saving}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
+            >
+              Aplicar categoria ({selectedIds.length})
             </button>
             <button
               type="button"
@@ -813,7 +943,12 @@ export default function AdminProductsPage() {
               Nenhum produto cadastrado ainda.
             </p>
           ) : null}
-          {products.map((product) => {
+          {!loading && products.length > 0 && filteredProducts.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              Nenhum produto neste filtro.
+            </p>
+          ) : null}
+          {filteredProducts.map((product) => {
             const attention = needsAttention.has(product.id);
             const selected = selectedIds.includes(product.id);
             return (

@@ -45,7 +45,6 @@ Tambem e possivel selecionar varios produtos e clicar em "Publicar selecionados"
 1. Acesse `/admin/copys`.
 2. Selecione um produto e escolha o tipo de link:
    - Link com tracking (`/out`)
-   - Link com escolha (`/go`)
    - Link direto afiliado
 3. Clique em "Gerar copys" e use o botao "Copiar".
 
@@ -87,9 +86,6 @@ Importacao:
 - `/out/[slug]` registra clique em `outbound_clicks` e redireciona.
 - Usa `affiliate_url` se existir; caso contrario, usa `origin_url`.
 - O campo `click_count` e atualizado automaticamente a cada clique.
-
-## Link com escolha /go
-- `/go/[slug]` mostra duas opcoes: ver o catalogo ou seguir para o produto.
 
 ## Preco "De/Por"
 - O "Por" usa o valor real do produto.
