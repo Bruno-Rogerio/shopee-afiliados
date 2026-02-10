@@ -1,5 +1,4 @@
 ﻿import Link from "next/link";
-import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/ProductCard";
 import type { Collection, CollectionItem, Product } from "@/lib/types";
@@ -22,7 +21,39 @@ export default async function CollectionPage({ params }: PageProps) {
     : { data: null };
 
   if (!collectionData) {
-    notFound();
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-6 py-10">
+        <div className="mx-auto w-full max-w-5xl">
+          <Link
+            href="/listas"
+            className="text-sm text-slate-500 transition hover:text-slate-700"
+          >
+            Voltar para listas
+          </Link>
+          <h1 className="mt-4 text-3xl font-semibold text-slate-900">
+            Lista indisponivel
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            A lista nao foi encontrada ou esta desativada. Para aparecer no
+            site, ative a lista no painel admin.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/listas"
+              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Ver listas ativas
+            </Link>
+            <Link
+              href="/"
+              className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+            >
+              Ir para home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const collection = collectionData as Collection;
