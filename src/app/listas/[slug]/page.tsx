@@ -10,17 +10,36 @@ type PageProps = {
 };
 
 export default async function CollectionPage({ params }: PageProps) {
+  const slugParam = typeof params?.slug === "string" ? params.slug.trim() : "";
   const supabase = createServerClient();
-  const { data: collectionData } = supabase
-    ? await supabase
+  let collectionData: Collection | null = null;
+
+  if (supabase && slugParam) {
+    const { data, error } = await supabase
+      .from("collections")
+      .select("id, name, slug, description, is_active")
+      .eq("slug", slugParam)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Collections lookup failed:", error);
+    }
+
+    collectionData = (data ?? null) as Collection | null;
+
+    if (!collectionData) {
+      const { data: fallback } = await supabase
         .from("collections")
         .select("id, name, slug, description, is_active")
-        .eq("slug", params.slug)
-        .eq("is_active", true)
-        .single()
-    : { data: null };
+        .ilike("slug", slugParam)
+        .limit(1)
+        .maybeSingle();
+      collectionData = (fallback ?? null) as Collection | null;
+    }
+  }
 
-  if (!collectionData) {
+  if (!collectionData || !collectionData.is_active) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-6 py-10">
         <div className="mx-auto w-full max-w-5xl">
