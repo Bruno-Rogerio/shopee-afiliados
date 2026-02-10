@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { slugify } from "@/lib/slugify";
 import { isValidUrl } from "@/lib/validation";
+import { CATEGORY_OPTIONS } from "@/lib/categories";
 import type { Product } from "@/lib/types";
 
 type FormState = {
@@ -51,18 +52,6 @@ const emptyForm: FormState = {
   is_active: false,
 };
 
-const categoryOptions = [
-  "Tech",
-  "Casa e decoração",
-  "Pet",
-  "Automóveis",
-  "Beleza e saúde",
-  "Eletrônicos",
-  "Eletrodomésticos",
-  "Games",
-  "Produtos de Limpeza",
-  "Alimentos",
-];
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -584,7 +573,7 @@ export default function AdminProductsPage() {
                 className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="">Sem categoria</option>
-                {categoryOptions.map((category) => (
+                {CATEGORY_OPTIONS.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -894,7 +883,7 @@ export default function AdminProductsPage() {
               className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 focus:border-slate-400 focus:outline-none"
             >
               <option value="">Categoria em massa</option>
-              {categoryOptions.map((category) => (
+              {CATEGORY_OPTIONS.map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>

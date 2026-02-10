@@ -5,6 +5,7 @@ import Papa from "papaparse";
 import { supabase } from "@/lib/supabase/client";
 import { isValidUrl } from "@/lib/validation";
 import { slugify } from "@/lib/slugify";
+import { CATEGORY_OPTIONS } from "@/lib/categories";
 
 const expectedHeader = [
   "Item Id",
@@ -17,6 +18,203 @@ const expectedHeader = [
   "Product Link",
   "Offer Link",
 ];
+
+const categoryRules: { category: string; keywords: string[] }[] = [
+  {
+    category: "Tech",
+    keywords: [
+      "tech",
+      "gadget",
+      "smart",
+      "bluetooth",
+      "wireless",
+      "usb",
+      "cabo",
+      "carregador",
+      "powerbank",
+      "hub",
+      "suporte",
+      "mouse",
+      "teclado",
+    ],
+  },
+  {
+    category: "Eletrônicos",
+    keywords: [
+      "fone",
+      "headset",
+      "tv",
+      "monitor",
+      "camera",
+      "celular",
+      "smartphone",
+      "tablet",
+      "notebook",
+      "laptop",
+      "relogio",
+      "smartwatch",
+      "caixa de som",
+      "soundbar",
+    ],
+  },
+  {
+    category: "Eletrodomésticos",
+    keywords: [
+      "airfryer",
+      "air fryer",
+      "liquidificador",
+      "cafeteira",
+      "microondas",
+      "geladeira",
+      "fogao",
+      "forno",
+      "lavadora",
+      "aspirador",
+      "ventilador",
+      "batedeira",
+    ],
+  },
+  {
+    category: "Casa e decoração",
+    keywords: [
+      "decor",
+      "decoracao",
+      "almofada",
+      "tapete",
+      "cortina",
+      "luminaria",
+      "vaso",
+      "quadro",
+      "organizador",
+      "cama",
+      "mesa",
+      "banheiro",
+      "cozinha",
+    ],
+  },
+  {
+    category: "Pet",
+    keywords: [
+      "pet",
+      "cachorro",
+      "cao",
+      "gato",
+      "areia",
+      "racao",
+      "coleira",
+      "petisco",
+      "brinquedo",
+    ],
+  },
+  {
+    category: "Automóveis",
+    keywords: [
+      "carro",
+      "automotivo",
+      "veiculo",
+      "moto",
+      "motocicleta",
+      "pneu",
+      "capacete",
+      "farol",
+    ],
+  },
+  {
+    category: "Beleza e saúde",
+    keywords: [
+      "beleza",
+      "skin",
+      "skincare",
+      "maquiagem",
+      "creme",
+      "perfume",
+      "shampoo",
+      "vitamina",
+      "saude",
+      "barbeador",
+      "secador",
+      "chapinha",
+    ],
+  },
+  {
+    category: "Games",
+    keywords: [
+      "game",
+      "gamer",
+      "ps5",
+      "ps4",
+      "xbox",
+      "nintendo",
+      "switch",
+      "controle",
+      "joystick",
+    ],
+  },
+  {
+    category: "Produtos de Limpeza",
+    keywords: [
+      "limpeza",
+      "detergente",
+      "desinfetante",
+      "sabao",
+      "amaciante",
+      "alvejante",
+      "multiuso",
+    ],
+  },
+  {
+    category: "Alimentos",
+    keywords: [
+      "alimento",
+      "chocolate",
+      "cafe",
+      "cha",
+      "snack",
+      "biscoito",
+      "tempero",
+      "suco",
+    ],
+  },
+];
+
+const normalizedCategorySet = new Set(
+  CATEGORY_OPTIONS.map((category) => category.toLowerCase())
+);
+
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function inferCategory(title: string, storeName: string) {
+  const text = normalizeText(`${title} ${storeName}`.trim());
+  if (!text) return null;
+
+  let bestCategory: string | null = null;
+  let bestScore = 0;
+  let tie = false;
+
+  for (const rule of categoryRules) {
+    const score = rule.keywords.reduce((total, keyword) => {
+      if (!keyword) return total;
+      return text.includes(keyword) ? total + 1 : total;
+    }, 0);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestCategory = rule.category;
+      tie = false;
+    } else if (score > 0 && score === bestScore) {
+      tie = true;
+    }
+  }
+
+  if (!bestCategory || bestScore === 0 || tie) return null;
+  if (!normalizedCategorySet.has(bestCategory.toLowerCase())) return null;
+  return bestCategory;
+}
 
 type ImportRow = {
   line: number;
@@ -250,6 +448,7 @@ export default function AdminImportPage() {
         ? `${baseSlug}-${row.external_id}`
         : row.external_id;
 
+      const inferredCategory = inferCategory(row.title, row.store_name);
       const { data: insertData, error: insertError } = await supabase
         .from("products")
         .insert({
@@ -264,7 +463,7 @@ export default function AdminImportPage() {
           affiliate_url: row.affiliate_url,
           tags: ["shopee"],
           store_name: row.store_name || null,
-          category: null,
+          category: inferredCategory,
           is_active: false,
         })
         .select("id")
@@ -333,16 +532,20 @@ export default function AdminImportPage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">
-            Importar CSV da Shopee
-          </h2>
-          <p className="text-sm text-slate-500">
-            O arquivo deve conter o cabecalho padrao e linhas encapsuladas em
-            aspas.
-          </p>
-        </div>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Importar CSV da Shopee
+            </h2>
+            <p className="text-sm text-slate-500">
+              O arquivo deve conter o cabecalho padrao e linhas encapsuladas em
+              aspas.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Categoria sera atribuida automaticamente quando houver match de
+              palavra-chave (sem travar a importacao).
+            </p>
+          </div>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <input
             type="file"

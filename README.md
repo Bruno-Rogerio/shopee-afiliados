@@ -79,6 +79,7 @@ Importacao:
 - Cria produtos como rascunho (`is_active=false`) com `tags=["shopee"]`.
 - Evita duplicados por `external_id`.
 - Se ja existir, atualiza somente `price_text`, `origin_url`, `affiliate_url`.
+- Tenta atribuir categoria automaticamente por palavras-chave (sem falhar se nao encontrar).
 - A busca automatica de imagem e opcional (beta).
 - Apos importar, complete imagem e categoria no painel.
 
