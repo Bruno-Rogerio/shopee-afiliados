@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/ProductCard";
+import { slugify } from "@/lib/slugify";
 import type { Collection, CollectionItem, Product } from "@/lib/types";
 
 export const revalidate = 60;
@@ -27,6 +28,19 @@ export default async function CollectionPage({ params }: PageProps) {
     }
 
     collectionData = (data ?? null) as Collection | null;
+
+    if (!collectionData) {
+      const slugFallback = slugify(slugParam);
+      if (slugFallback && slugFallback !== slugParam) {
+        const { data: fallback } = await supabase
+          .from("collections")
+          .select("id, name, slug, description, is_active")
+          .eq("slug", slugFallback)
+          .limit(1)
+          .maybeSingle();
+        collectionData = (fallback ?? null) as Collection | null;
+      }
+    }
 
     if (!collectionData) {
       const { data: fallback } = await supabase

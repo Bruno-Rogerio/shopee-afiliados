@@ -1,10 +1,10 @@
 ﻿import Link from "next/link";
-import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { resolveProductUrl } from "@/lib/linkResolver";
 import { getProductImages } from "@/lib/images";
 import { getOriginalPrice } from "@/lib/pricing";
 import { ProductCarousel } from "@/components/ProductCarousel";
+import { slugify } from "@/lib/slugify";
 import type { Product } from "@/lib/types";
 
 export const revalidate = 60;
@@ -14,21 +14,81 @@ type PageProps = {
 };
 
 export default async function ProductPage({ params }: PageProps) {
+  const slugParam = typeof params?.slug === "string" ? params.slug.trim() : "";
   const supabase = createServerClient();
-  const { data } = supabase
-    ? await supabase
+  let productData: Product | null = null;
+
+  if (supabase && slugParam) {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", slugParam)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Product lookup failed:", error);
+    }
+
+    productData = (data ?? null) as Product | null;
+
+    if (!productData) {
+      const slugFallback = slugify(slugParam);
+      if (slugFallback && slugFallback !== slugParam) {
+        const { data: fallback } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", slugFallback)
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+        productData = (fallback ?? null) as Product | null;
+      }
+    }
+
+    if (!productData) {
+      const { data: fallback } = await supabase
         .from("products")
         .select("*")
-        .eq("slug", params.slug)
+        .ilike("slug", slugParam)
         .eq("is_active", true)
-        .single()
-    : { data: null };
-
-  if (!data) {
-    notFound();
+        .limit(1)
+        .maybeSingle();
+      productData = (fallback ?? null) as Product | null;
+    }
   }
 
-  const product = data as Product;
+  if (!productData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-6 py-10">
+        <div className="mx-auto w-full max-w-4xl">
+          <Link
+            href="/"
+            className="text-sm text-slate-500 transition hover:text-slate-700"
+          >
+            Voltar para a vitrine
+          </Link>
+          <h1 className="mt-4 text-3xl font-semibold text-slate-900">
+            Produto indisponivel
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            O produto nao foi encontrado ou ainda esta como rascunho.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/"
+              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Ver ofertas ativas
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const product = productData as Product;
   const images = getProductImages(product);
   const originalPrice = product.price_text
     ? getOriginalPrice(product.price_text, product.slug)
