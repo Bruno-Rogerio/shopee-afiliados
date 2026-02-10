@@ -378,18 +378,18 @@ export default function AdminCopysPage() {
           <p className="mt-6 text-sm text-slate-500">Carregando produtos...</p>
         ) : (
           <div className="mt-6 grid gap-4">
-            <div className="grid gap-3 lg:grid-cols-[1.1fr_220px_repeat(4,_minmax(180px,_1fr))_auto]">
+            <div className="flex flex-wrap items-center gap-3">
               <input
                 type="text"
                 value={filter}
                 onChange={(event) => setFilter(event.target.value)}
                 placeholder="Buscar produto"
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className="min-w-[220px] flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               />
               <select
                 value={categoryFilter}
                 onChange={(event) => setCategoryFilter(event.target.value)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className="min-w-[200px] rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="all">Todas as categorias</option>
                 {CATEGORY_OPTIONS.map((category) => (
@@ -401,7 +401,7 @@ export default function AdminCopysPage() {
               <select
                 value={linkMode}
                 onChange={(event) => setLinkMode(event.target.value as LinkMode)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className="min-w-[200px] rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="out">Link com tracking (/out)</option>
                 <option value="affiliate">Link direto afiliado</option>
@@ -409,7 +409,7 @@ export default function AdminCopysPage() {
               <select
                 value={channel}
                 onChange={(event) => setChannel(event.target.value as CopyChannel)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className="min-w-[160px] rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="whatsapp">WhatsApp</option>
                 <option value="instagram">Instagram</option>
@@ -418,7 +418,7 @@ export default function AdminCopysPage() {
               <select
                 value={tone}
                 onChange={(event) => setTone(event.target.value as CopyTone)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className="min-w-[180px] rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="enthusiastic">Tom entusiasmado</option>
                 <option value="direct">Tom direto</option>
@@ -427,7 +427,7 @@ export default function AdminCopysPage() {
               <select
                 value={urgency}
                 onChange={(event) => setUrgency(event.target.value as CopyUrgency)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className="min-w-[170px] rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
                 <option value="low">Urgência baixa</option>
                 <option value="medium">Urgência média</option>
@@ -437,7 +437,7 @@ export default function AdminCopysPage() {
                 type="button"
                 onClick={handleGenerate}
                 disabled={!selectedProduct || saving}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
               >
                 {saving ? "Gerando..." : "Gerar copys"}
               </button>
