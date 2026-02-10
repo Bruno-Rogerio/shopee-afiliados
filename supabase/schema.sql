@@ -24,6 +24,7 @@ create table if not exists public.products (
   exclusive_rank integer,
   trending_rank integer,
   hot_rank integer,
+  click_count integer not null default 0,
   is_active boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -36,6 +37,7 @@ create index if not exists products_featured_rank_idx on public.products (featur
 create index if not exists products_exclusive_rank_idx on public.products (exclusive_rank);
 create index if not exists products_trending_rank_idx on public.products (trending_rank);
 create index if not exists products_hot_rank_idx on public.products (hot_rank);
+create index if not exists products_click_count_idx on public.products (click_count);
 
 alter table public.products
 add column if not exists image_urls text[] not null default '{}';
@@ -64,6 +66,9 @@ add column if not exists trending_rank integer;
 alter table public.products
 add column if not exists hot_rank integer;
 
+alter table public.products
+add column if not exists click_count integer not null default 0;
+
 create table if not exists public.collections (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -87,6 +92,23 @@ create table if not exists public.collection_items (
 
 create index if not exists collection_items_collection_id_idx on public.collection_items (collection_id);
 create index if not exists collection_items_product_id_idx on public.collection_items (product_id);
+
+create table if not exists public.home_banners (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  subtitle text,
+  badge text,
+  cta_label text,
+  cta_url text,
+  theme text,
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists home_banners_is_active_idx on public.home_banners (is_active);
+create index if not exists home_banners_sort_order_idx on public.home_banners (sort_order);
 
 create table if not exists public.product_copies (
   id uuid primary key default gen_random_uuid(),
@@ -127,11 +149,32 @@ create trigger set_collections_updated_at
 before update on public.collections
 for each row execute function public.set_updated_at();
 
+drop trigger if exists set_home_banners_updated_at on public.home_banners;
+create trigger set_home_banners_updated_at
+before update on public.home_banners
+for each row execute function public.set_updated_at();
+
+create or replace function public.increment_product_clicks()
+returns trigger as $$
+begin
+  update public.products
+  set click_count = coalesce(click_count, 0) + 1
+  where id = new.product_id;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists increment_product_clicks on public.outbound_clicks;
+create trigger increment_product_clicks
+after insert on public.outbound_clicks
+for each row execute function public.increment_product_clicks();
+
 alter table public.products enable row level security;
 alter table public.product_copies enable row level security;
 alter table public.outbound_clicks enable row level security;
 alter table public.collections enable row level security;
 alter table public.collection_items enable row level security;
+alter table public.home_banners enable row level security;
 
 create policy "Public read active products"
 on public.products for select
@@ -152,6 +195,27 @@ with check (auth.role() = 'authenticated');
 
 create policy "Authenticated delete products"
 on public.products for delete
+using (auth.role() = 'authenticated');
+
+create policy "Public read active home banners"
+on public.home_banners for select
+using (is_active = true);
+
+create policy "Authenticated read home banners"
+on public.home_banners for select
+using (auth.role() = 'authenticated');
+
+create policy "Authenticated insert home banners"
+on public.home_banners for insert
+with check (auth.role() = 'authenticated');
+
+create policy "Authenticated update home banners"
+on public.home_banners for update
+using (auth.role() = 'authenticated')
+with check (auth.role() = 'authenticated');
+
+create policy "Authenticated delete home banners"
+on public.home_banners for delete
 using (auth.role() = 'authenticated');
 
 create policy "Public read active collections"

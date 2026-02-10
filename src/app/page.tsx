@@ -3,7 +3,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/ProductCard";
 import { slugify } from "@/lib/slugify";
 import { getProductImages } from "@/lib/images";
-import type { Collection, CollectionItem, Product } from "@/lib/types";
+import { parsePriceText } from "@/lib/pricing";
+import type { Collection, CollectionItem, HomeBanner, Product } from "@/lib/types";
 
 export const revalidate = 60;
 
@@ -21,7 +22,40 @@ type RankKey =
 
 type CollectionWithItems = Collection & { items: CollectionItem[] };
 
+type HomeProps = {
+  searchParams?: {
+    q?: string;
+    cat?: string;
+    price?: string;
+    sort?: string;
+  };
+};
+
 const parseDate = (value?: string) => (value ? Date.parse(value) : 0);
+
+const bannerThemes: Record<string, string> = {
+  amber: "from-amber-100/80 via-amber-50 to-white",
+  indigo: "from-indigo-100/70 via-indigo-50 to-white",
+  emerald: "from-emerald-100/70 via-emerald-50 to-white",
+  rose: "from-rose-100/70 via-rose-50 to-white",
+  slate: "from-slate-100/70 via-white to-white",
+};
+
+const priceRanges = [
+  { value: "all", label: "Todos" },
+  { value: "0-50", label: "Até R$ 50" },
+  { value: "50-100", label: "R$ 50 - 100" },
+  { value: "100-200", label: "R$ 100 - 200" },
+  { value: "200-500", label: "R$ 200 - 500" },
+  { value: "500+", label: "Acima de R$ 500" },
+];
+
+const sortOptions = [
+  { value: "recent", label: "Mais recentes" },
+  { value: "popular", label: "Mais clicados" },
+  { value: "price-asc", label: "Menor preço" },
+  { value: "price-desc", label: "Maior preço" },
+];
 
 function sortByRank(list: Product[], key: RankKey) {
   return [...list].sort((a, b) => {
@@ -61,13 +95,78 @@ function buildCategories(products: Product[]): CategorySummary[] {
   });
 }
 
-export default async function Home() {
+function filterByPrice(product: Product, priceFilter: string) {
+  if (!priceFilter || priceFilter === "all") return true;
+  const value = product.price_text
+    ? parsePriceText(product.price_text)
+    : null;
+  if (value === null) return false;
+
+  if (priceFilter === "500+") return value >= 500;
+  const [min, max] = priceFilter.split("-").map(Number);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return true;
+  return value >= min && value <= max;
+}
+
+function sortByFilter(products: Product[], sort: string) {
+  const list = [...products];
+
+  if (sort === "price-asc") {
+    return list.sort((a, b) => {
+      const aValue = a.price_text ? parsePriceText(a.price_text) ?? Infinity : Infinity;
+      const bValue = b.price_text ? parsePriceText(b.price_text) ?? Infinity : Infinity;
+      return aValue - bValue;
+    });
+  }
+
+  if (sort === "price-desc") {
+    return list.sort((a, b) => {
+      const aValue = a.price_text ? parsePriceText(a.price_text) ?? -Infinity : -Infinity;
+      const bValue = b.price_text ? parsePriceText(b.price_text) ?? -Infinity : -Infinity;
+      return bValue - aValue;
+    });
+  }
+
+  if (sort === "popular") {
+    return list.sort(
+      (a, b) => (b.click_count ?? 0) - (a.click_count ?? 0)
+    );
+  }
+
+  return list.sort((a, b) => parseDate(b.created_at) - parseDate(a.created_at));
+}
+
+function renderBannerCta(banner: HomeBanner) {
+  if (!banner.cta_label || !banner.cta_url) return null;
+  const isExternal = banner.cta_url.startsWith("http");
+  if (isExternal) {
+    return (
+      <a
+        href={banner.cta_url}
+        className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+        rel="nofollow"
+      >
+        {banner.cta_label}
+      </a>
+    );
+  }
+  return (
+    <Link
+      href={banner.cta_url}
+      className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+    >
+      {banner.cta_label}
+    </Link>
+  );
+}
+
+export default async function Home({ searchParams }: HomeProps) {
   const supabase = createServerClient();
   const { data: productsData } = supabase
     ? await supabase
         .from("products")
         .select(
-          "id, slug, title, description_short, price_text, image_url, image_urls, tags, category, is_featured, is_exclusive, is_trending, is_hot, featured_rank, exclusive_rank, trending_rank, hot_rank, is_active, created_at"
+          "id, slug, title, description_short, price_text, image_url, image_urls, tags, category, is_featured, is_exclusive, is_trending, is_hot, featured_rank, exclusive_rank, trending_rank, hot_rank, click_count, is_active, created_at"
         )
         .eq("is_active", true)
         .order("created_at", { ascending: false })
@@ -92,7 +191,36 @@ export default async function Home() {
     products.filter((product) => product.is_hot),
     "hot_rank"
   );
+  const mostClicked = [...products]
+    .sort((a, b) => (b.click_count ?? 0) - (a.click_count ?? 0))
+    .slice(0, 6);
   const latest = products.slice(0, 9);
+
+  const query = typeof searchParams?.q === "string" ? searchParams.q.trim() : "";
+  const selectedCategory =
+    typeof searchParams?.cat === "string" ? searchParams.cat : "all";
+  const selectedPrice =
+    typeof searchParams?.price === "string" ? searchParams.price : "all";
+  const selectedSort =
+    typeof searchParams?.sort === "string" ? searchParams.sort : "recent";
+
+  const filteredProducts = sortByFilter(
+    products.filter((product) => {
+      const matchesQuery = query
+        ? product.title.toLowerCase().includes(query.toLowerCase()) ||
+          (product.tags ?? []).some((tag) =>
+            tag.toLowerCase().includes(query.toLowerCase())
+          )
+        : true;
+      const matchesCategory =
+        selectedCategory === "all"
+          ? true
+          : slugify(product.category ?? "") === selectedCategory;
+      const matchesPrice = filterByPrice(product, selectedPrice);
+      return matchesQuery && matchesCategory && matchesPrice;
+    }),
+    selectedSort
+  );
 
   const { data: collectionsData } = supabase
     ? await supabase
@@ -102,6 +230,15 @@ export default async function Home() {
         .order("created_at", { ascending: false })
     : { data: [] };
 
+  const { data: bannersData } = supabase
+    ? await supabase
+        .from("home_banners")
+        .select("id, title, subtitle, badge, cta_label, cta_url, theme, sort_order, is_active")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+    : { data: [] };
+
+  const banners = (bannersData ?? []) as HomeBanner[];
   const baseCollections = (collectionsData ?? []) as Collection[];
   const collectionIds = baseCollections.map((collection) => collection.id);
   const { data: collectionItemsData } =
@@ -109,7 +246,7 @@ export default async function Home() {
       ? await supabase
           .from("collection_items")
           .select(
-            "id, sort_order, collection_id, product_id, product:products (id, slug, title, description_short, price_text, image_url, image_urls, tags, category, is_featured, is_exclusive, is_trending, is_hot, featured_rank, exclusive_rank, trending_rank, hot_rank, is_active, created_at)"
+            "id, sort_order, collection_id, product_id, product:products (id, slug, title, description_short, price_text, image_url, image_urls, tags, category, is_featured, is_exclusive, is_trending, is_hot, featured_rank, exclusive_rank, trending_rank, hot_rank, click_count, is_active, created_at)"
           )
           .in("collection_id", collectionIds)
           .order("sort_order", { ascending: true })
@@ -170,10 +307,10 @@ export default async function Home() {
               Listas especiais
             </Link>
             <Link
-              href="#ofertas"
+              href="#explorar"
               className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Ver ofertas
+              Explorar ofertas
             </Link>
           </nav>
         </div>
@@ -189,16 +326,15 @@ export default async function Home() {
                 Economize hoje
               </p>
               <h2 className="mt-2 text-4xl font-semibold text-slate-900">
-                As melhores promoções da internet, reunidas em um só lugar
+                Promoções selecionadas para você encontrar rápido o que procura
               </h2>
               <p className="mt-4 max-w-2xl text-sm text-slate-600">
-                Aqui você encontra ofertas reais, escolhidas a dedo, com
-                categorias claras e listas especiais para comprar rápido e
-                economizar sem perder tempo.
+                Esta vitrine reúne ofertas divulgadas diariamente. Compare,
+                escolha sua categoria e acesse o link da oferta em poucos cliques.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="#ofertas"
+                  href="#explorar"
                   className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Ver ofertas agora
@@ -213,17 +349,47 @@ export default async function Home() {
             </div>
             <div className="grid gap-4">
               <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 shadow-sm">
-                Atualizado diariamente • Ofertas verificadas
+                Atualizado diariamente • Links diretos
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 shadow-sm">
-                Links rápidos • Compra segura
+                Categorias inteligentes • Mais agilidade
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 shadow-sm">
-                Categorias inteligentes • Mais economia
+                Ofertas organizadas • Economia de tempo
               </div>
             </div>
           </div>
         </section>
+
+        {banners.length > 0 ? (
+          <section className="mt-8 grid gap-4 md:grid-cols-3">
+            {banners.map((banner) => {
+              const themeClass = banner.theme
+                ? bannerThemes[banner.theme]
+                : bannerThemes.slate;
+
+              return (
+                <div
+                  key={banner.id}
+                  className={`rounded-3xl border border-white/80 bg-gradient-to-br ${themeClass} p-6 shadow-sm`}
+                >
+                  {banner.badge ? (
+                    <span className="rounded-full bg-slate-900 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      {banner.badge}
+                    </span>
+                  ) : null}
+                  <h3 className="mt-3 text-lg font-semibold text-slate-900">
+                    {banner.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {banner.subtitle}
+                  </p>
+                  {renderBannerCta(banner)}
+                </div>
+              );
+            })}
+          </section>
+        ) : null}
 
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
@@ -258,7 +424,7 @@ export default async function Home() {
               1. Descubra
             </p>
             <h3 className="mt-3 text-lg font-semibold text-slate-900">
-              Navegue por categorias ou listas prontas
+              Explore categorias ou listas prontas
             </h3>
             <p className="mt-2 text-sm text-slate-600">
               Tudo organizado para você encontrar exatamente o que quer.
@@ -269,21 +435,21 @@ export default async function Home() {
               2. Compare
             </p>
             <h3 className="mt-3 text-lg font-semibold text-slate-900">
-              Veja preço e desconto em segundos
+              Veja preço e destaque em segundos
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              O preço real aparece com transparência, sem surpresa no checkout.
+              A oferta aparece com informações essenciais para decidir rápido.
             </p>
           </div>
           <div className="rounded-3xl border border-white/80 bg-white/80 p-6 shadow-sm">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              3. Economize
+              3. Acesse
             </p>
             <h3 className="mt-3 text-lg font-semibold text-slate-900">
-              Clique e compre com segurança
+              Vá direto para o link da oferta
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              A oferta abre direto no parceiro com checkout seguro.
+              Você é direcionado para o parceiro responsável pela promoção.
             </p>
           </div>
         </section>
@@ -366,7 +532,7 @@ export default async function Home() {
                     </div>
                     <p className="mt-3 text-sm text-slate-600">
                       {collection.description ||
-                        "Seleção pronta para comprar sem perder tempo."}
+                        "Seleção pronta para encontrar as melhores ofertas."}
                     </p>
                     <div className="mt-4 flex -space-x-4">
                       {previewImages.length > 0
@@ -392,7 +558,98 @@ export default async function Home() {
           </section>
         ) : null}
 
-        <div id="ofertas" className="pt-4" />
+        {mostClicked.length > 0 ? (
+          <section className="mt-12">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h3 className="text-2xl font-semibold text-slate-900">
+                Mais clicados
+              </h3>
+              <p className="text-xs text-slate-500">
+                Ofertas mais acessadas pelos visitantes.
+              </p>
+            </div>
+            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {mostClicked.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section id="explorar" className="mt-12">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="text-2xl font-semibold text-slate-900">
+                Explore todas as ofertas
+              </h3>
+              <p className="text-xs text-slate-500">
+                Use filtros para encontrar o que precisa.
+              </p>
+            </div>
+          </div>
+
+          <form className="mt-6 grid gap-3 rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
+            <input
+              type="text"
+              name="q"
+              defaultValue={query}
+              placeholder="Buscar produto"
+              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            />
+            <select
+              name="cat"
+              defaultValue={selectedCategory}
+              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            >
+              <option value="all">Todas as categorias</option>
+              {categories.map((category) => (
+                <option key={category.slug} value={category.slug}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <select
+              name="price"
+              defaultValue={selectedPrice}
+              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            >
+              {priceRanges.map((range) => (
+                <option key={range.value} value={range.value}>
+                  {range.label}
+                </option>
+              ))}
+            </select>
+            <select
+              name="sort"
+              defaultValue={selectedSort}
+              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="rounded-2xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Filtrar
+            </button>
+          </form>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProducts.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+                Nenhuma oferta encontrada com esses filtros.
+              </div>
+            ) : (
+              filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
+          </div>
+        </section>
 
         {featured.length > 0 ? (
           <section className="mt-12">
@@ -442,7 +699,7 @@ export default async function Home() {
                   Em alta agora
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Produtos que estão bombando hoje.
+                  Produtos com maior atenção no momento.
                 </p>
               </div>
             </div>
@@ -500,26 +757,26 @@ export default async function Home() {
 
         <section className="mt-16 rounded-[32px] border border-white/80 bg-white/90 p-10 text-center shadow-sm">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-            Pronto para economizar?
+            Quer mais ofertas?
           </p>
           <h3 className="mt-3 text-3xl font-semibold text-slate-900">
-            Explore as melhores ofertas agora mesmo
+            Explore as categorias e listas especiais
           </h3>
           <p className="mt-3 text-sm text-slate-600">
-            Nossa equipe atualiza diariamente para você comprar com confiança.
+            Novas promoções são adicionadas diariamente.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
-              href="#ofertas"
+              href="/c"
               className="rounded-full bg-slate-900 px-6 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Ver ofertas
+              Ver categorias
             </Link>
             <Link
-              href="/c"
+              href="/listas"
               className="rounded-full border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
             >
-              Ver categorias
+              Ver listas
             </Link>
           </div>
         </section>

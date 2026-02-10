@@ -128,6 +128,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
   const links = [
     { href: "/admin", label: "Produtos" },
     { href: "/admin/collections", label: "Listas" },
+    { href: "/admin/banners", label: "Banners" },
     { href: "/admin/copys", label: "Copys" },
     { href: "/admin/import", label: "Importar CSV" },
   ];
@@ -138,7 +139,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              Catálogo de Afiliados
+              Vitrine de Ofertas
             </p>
             <h1 className="text-xl font-semibold text-slate-900">Admin</h1>
           </div>

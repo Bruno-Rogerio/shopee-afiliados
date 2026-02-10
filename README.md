@@ -21,6 +21,7 @@ MVP simples para publicar produtos em vitrine publica, gerar copys para WhatsApp
      - `supabase/migrations_add_image_urls.sql`
      - `supabase/migrations_add_product_flags.sql`
      - `supabase/migrations_add_collections.sql`
+     - `supabase/migrations_add_clicks_and_banners.sql`
 4. Crie um usuario em Supabase Auth (Email/Password).
 5. Rode o projeto:
    - `npm run dev`
@@ -47,6 +48,13 @@ Tambem e possivel selecionar varios produtos e clicar em "Publicar selecionados"
    - Link com escolha (`/go`)
    - Link direto afiliado
 3. Clique em "Gerar copys" e use o botao "Copiar".
+
+Voce pode escolher canal (WhatsApp/Instagram/Stories), tom e urgencia.
+
+## Banners da home
+1. Acesse `/admin/banners`.
+2. Crie banners com titulo, subtitulo e CTA.
+3. Ordene com as setas para controlar a sequencia na home.
 
 ## Listas especiais
 1. Acesse `/admin/collections`.
@@ -78,6 +86,7 @@ Importacao:
 ## Tracking /out
 - `/out/[slug]` registra clique em `outbound_clicks` e redireciona.
 - Usa `affiliate_url` se existir; caso contrario, usa `origin_url`.
+- O campo `click_count` e atualizado automaticamente a cada clique.
 
 ## Link com escolha /go
 - `/go/[slug]` mostra duas opcoes: ver o catalogo ou seguir para o produto.

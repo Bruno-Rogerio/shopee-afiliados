@@ -120,3 +120,45 @@ values
     (select id from public.products where slug = 'lampada-led-eco'),
     1
   );
+
+insert into public.home_banners (
+  title,
+  subtitle,
+  badge,
+  cta_label,
+  cta_url,
+  theme,
+  sort_order,
+  is_active
+)
+values
+  (
+    'Super descontos do dia',
+    'Seleção com preços reduzidos para você economizar agora.',
+    'HOJE',
+    'Ver ofertas',
+    '/#ofertas',
+    'amber',
+    1,
+    true
+  ),
+  (
+    'Listas especiais',
+    'Coleções prontas para encontrar rápido o que você procura.',
+    'TOP',
+    'Explorar listas',
+    '/listas',
+    'indigo',
+    2,
+    true
+  ),
+  (
+    'Categorias em alta',
+    'Acesse as categorias mais procuradas da semana.',
+    'HOT',
+    'Ver categorias',
+    '/c',
+    'emerald',
+    3,
+    true
+  );

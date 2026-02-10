@@ -20,6 +20,7 @@ export type Product = {
   exclusive_rank: number | null;
   trending_rank: number | null;
   hot_rank: number | null;
+  click_count: number | null;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -46,4 +47,18 @@ export type CollectionItem = {
   product_id: string;
   sort_order: number;
   product?: Product | null;
+};
+
+export type HomeBanner = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  badge: string | null;
+  cta_label: string | null;
+  cta_url: string | null;
+  theme: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 };
