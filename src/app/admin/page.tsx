@@ -124,10 +124,6 @@ export default function AdminProductsPage() {
     [products]
   );
 
-  const allSelected =
-    filteredProducts.length > 0 &&
-    filteredProducts.every((product) => selectedIds.includes(product.id));
-
   const needsAttention = useMemo(() => {
     return new Set(
       products
@@ -367,16 +363,22 @@ export default function AdminProductsPage() {
   };
 
   const handleSelectAll = () => {
-    if (allSelected) {
-      const visibleIds = new Set(filteredProducts.map((product) => product.id));
-      setSelectedIds((prev) => prev.filter((id) => !visibleIds.has(id)));
-    } else {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        filteredProducts.forEach((product) => next.add(product.id));
-        return Array.from(next);
-      });
-    }
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      filteredProducts.forEach((product) => next.add(product.id));
+      return Array.from(next);
+    });
+  };
+
+  const handleClearSelectionVisible = () => {
+    const visibleIds = new Set(filteredProducts.map((product) => product.id));
+    setSelectedIds((prev) => prev.filter((id) => !visibleIds.has(id)));
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setSearchQuery("");
   };
 
   const handleToggleSelect = (productId: string) => {
@@ -402,6 +404,7 @@ export default function AdminProductsPage() {
     } else {
       setMessage(`${selectedIds.length} produtos publicados.`);
       setSelectedIds([]);
+      handleClearFilters();
       await fetchProducts();
     }
 
@@ -426,10 +429,10 @@ export default function AdminProductsPage() {
     if (updateError) {
       setError(updateError.message);
     } else {
-      setMessage(
-        `Categoria aplicada em ${selectedIds.length} produtos.`
-      );
+      setMessage(`Categoria aplicada em ${selectedIds.length} produtos.`);
       setBulkCategory("");
+      setSelectedIds([]);
+      handleClearFilters();
       await fetchProducts();
     }
 
@@ -456,6 +459,7 @@ export default function AdminProductsPage() {
     } else {
       setMessage(`${selectedIds.length} produtos removidos.`);
       setSelectedIds([]);
+      handleClearFilters();
       await fetchProducts();
     }
 
@@ -932,7 +936,21 @@ export default function AdminProductsPage() {
               onClick={handleSelectAll}
               className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
-              {allSelected ? "Limpar selecao" : "Selecionar todos"}
+              Selecionar todos (visiveis)
+            </button>
+            <button
+              type="button"
+              onClick={handleClearSelectionVisible}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+            >
+              Tirar selecao (visiveis)
+            </button>
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+            >
+              Limpar filtros
             </button>
             <select
               value={bulkCategory}
