@@ -66,9 +66,7 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "published" | "draft"
   >("all");
-  const [categoryFilter, setCategoryFilter] = useState<
-    "all" | "uncategorized"
-  >("all");
+  const [categorySelections, setCategorySelections] = useState<string[]>([]);
   const [bulkCategory, setBulkCategory] = useState("");
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -86,8 +84,18 @@ export default function AdminProductsPage() {
       list = list.filter((product) => !product.is_active);
     }
 
-    if (categoryFilter === "uncategorized") {
-      list = list.filter((product) => !product.category);
+    if (categorySelections.length > 0) {
+      list = list.filter((product) => {
+        const isUncategorized =
+          !product.category || !product.category.trim();
+        const matchesUncategorized = categorySelections.includes(
+          "__uncategorized__"
+        );
+        const matchesCategory = product.category
+          ? categorySelections.includes(product.category)
+          : false;
+        return (matchesUncategorized && isUncategorized) || matchesCategory;
+      });
     }
 
     const term = searchQuery.trim().toLowerCase();
@@ -112,7 +120,7 @@ export default function AdminProductsPage() {
         tags
       );
     });
-  }, [products, statusFilter, categoryFilter, searchQuery]);
+  }, [products, statusFilter, categorySelections, searchQuery]);
 
   const publishedCount = useMemo(
     () => products.filter((product) => product.is_active).length,
@@ -123,6 +131,14 @@ export default function AdminProductsPage() {
     () => products.filter((product) => !product.category).length,
     [products]
   );
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    products.forEach((product) => {
+      if (!product.category) return;
+      counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+    });
+    return counts;
+  }, [products]);
 
   const needsAttention = useMemo(() => {
     return new Set(
@@ -377,8 +393,8 @@ export default function AdminProductsPage() {
 
   const handleClearFilters = () => {
     setStatusFilter("all");
-    setCategoryFilter("all");
     setSearchQuery("");
+    setCategorySelections([]);
   };
 
   const handleToggleSelect = (productId: string) => {
@@ -387,6 +403,18 @@ export default function AdminProductsPage() {
         ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     );
+  };
+
+  const toggleCategorySelection = (value: string) => {
+    setCategorySelections((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
+  };
+
+  const clearCategorySelections = () => {
+    setCategorySelections([]);
   };
 
   const handlePublishSelected = async () => {
@@ -915,21 +943,6 @@ export default function AdminProductsPage() {
               >
                 Rascunhos ({draftCount})
               </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setCategoryFilter((prev) =>
-                    prev === "uncategorized" ? "all" : "uncategorized"
-                  )
-                }
-                className={`rounded-full px-3 py-1.5 transition ${
-                  categoryFilter === "uncategorized"
-                    ? "bg-amber-500 text-white"
-                    : "hover:bg-slate-100"
-                }`}
-              >
-                Sem categoria ({uncategorizedCount})
-              </button>
             </div>
             <button
               type="button"
@@ -995,6 +1008,51 @@ export default function AdminProductsPage() {
             >
               Atualizar lista
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Categorias
+              </h3>
+              <p className="text-xs text-slate-500">
+                Selecione uma ou mais para filtrar.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearCategorySelections}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+            >
+              Limpar categorias
+            </button>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={categorySelections.includes("__uncategorized__")}
+                onChange={() => toggleCategorySelection("__uncategorized__")}
+                className="h-4 w-4 rounded border-slate-300 text-slate-900"
+              />
+              Sem categoria ({uncategorizedCount})
+            </label>
+            {CATEGORY_OPTIONS.map((category) => (
+              <label
+                key={category}
+                className="flex items-center gap-2 text-xs text-slate-600"
+              >
+                <input
+                  type="checkbox"
+                  checked={categorySelections.includes(category)}
+                  onChange={() => toggleCategorySelection(category)}
+                  className="h-4 w-4 rounded border-slate-300 text-slate-900"
+                />
+                {category} ({categoryCounts.get(category) ?? 0})
+              </label>
+            ))}
           </div>
         </div>
 
