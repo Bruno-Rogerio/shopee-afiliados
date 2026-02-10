@@ -75,7 +75,7 @@ export default async function Home() {
 
   const products = (productsData ?? []) as Product[];
   const categories = buildCategories(products);
-  const topCategories = categories.slice(0, 12);
+  const topCategories = categories.slice(0, 10);
   const featured = sortByRank(
     products.filter((product) => product.is_featured),
     "featured_rank"
@@ -145,12 +145,12 @@ export default async function Home() {
     .filter((collection) => collection.items.length > 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f4f4ff] via-white to-[#fef7f0]">
-      <header className="border-b border-white/60 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.9),_rgba(244,244,255,0.6))]">
+      <header className="sticky top-0 z-20 border-b border-white/60 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Catálogo de Afiliados
+              Promoções reais
             </p>
             <h1 className="text-2xl font-semibold text-slate-900">
               Vitrine de Ofertas
@@ -167,58 +167,59 @@ export default async function Home() {
               href="/listas"
               className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
-              Listas
+              Listas especiais
             </Link>
             <Link
-              href="/admin"
+              href="#ofertas"
               className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Painel admin
+              Ver ofertas
             </Link>
           </nav>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
-        <section className="relative overflow-hidden rounded-[36px] border border-white/80 bg-white/70 p-10 shadow-lg backdrop-blur">
-          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-200/30 blur-2xl" />
-          <div className="absolute -bottom-16 left-10 h-48 w-48 rounded-full bg-indigo-200/40 blur-2xl" />
-          <div className="relative z-10 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className="relative overflow-hidden rounded-[40px] border border-white/80 bg-white/80 p-10 shadow-lg backdrop-blur">
+          <div className="absolute -right-12 -top-10 h-48 w-48 rounded-full bg-amber-200/40 blur-3xl" />
+          <div className="absolute -bottom-20 left-10 h-56 w-56 rounded-full bg-indigo-200/30 blur-3xl" />
+          <div className="relative z-10 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
-                Seleção do dia
+                Economize hoje
               </p>
               <h2 className="mt-2 text-4xl font-semibold text-slate-900">
-                Achados quentes, exclusivos e com desconto de verdade
+                As melhores promoções da internet, reunidas em um só lugar
               </h2>
               <p className="mt-4 max-w-2xl text-sm text-slate-600">
-                Monte sua vitrine com categorias, listas especiais e ofertas
-                prontas para compartilhar no WhatsApp e Instagram.
+                Aqui você encontra ofertas reais, escolhidas a dedo, com
+                categorias claras e listas especiais para comprar rápido e
+                economizar sem perder tempo.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/c"
+                  href="#ofertas"
                   className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  Explorar categorias
+                  Ver ofertas agora
                 </Link>
                 <Link
                   href="/listas"
                   className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
                 >
-                  Ver listas prontas
+                  Explorar listas especiais
                 </Link>
               </div>
             </div>
             <div className="grid gap-4">
               <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 shadow-sm">
-                Atualizado diariamente • Tracking ativo
+                Atualizado diariamente • Ofertas verificadas
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 shadow-sm">
-                Copys prontas para conversão • Links com tracking
+                Links rápidos • Compra segura
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 text-xs text-slate-500 shadow-sm">
-                Curadoria inteligente • Destaques por categoria
+                Categorias inteligentes • Mais economia
               </div>
             </div>
           </div>
@@ -251,11 +252,47 @@ export default async function Home() {
           </div>
         </section>
 
+        <section className="mt-12 grid gap-6 lg:grid-cols-3">
+          <div className="rounded-3xl border border-white/80 bg-white/80 p-6 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              1. Descubra
+            </p>
+            <h3 className="mt-3 text-lg font-semibold text-slate-900">
+              Navegue por categorias ou listas prontas
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Tudo organizado para você encontrar exatamente o que quer.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-white/80 bg-white/80 p-6 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              2. Compare
+            </p>
+            <h3 className="mt-3 text-lg font-semibold text-slate-900">
+              Veja preço e desconto em segundos
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              O preço real aparece com transparência, sem surpresa no checkout.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-white/80 bg-white/80 p-6 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+              3. Economize
+            </p>
+            <h3 className="mt-3 text-lg font-semibold text-slate-900">
+              Clique e compre com segurança
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              A oferta abre direto no parceiro com checkout seguro.
+            </p>
+          </div>
+        </section>
+
         {categories.length > 0 ? (
-          <section className="mt-10">
+          <section className="mt-12">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-xl font-semibold text-slate-900">
-                Categorias em destaque
+              <h3 className="text-2xl font-semibold text-slate-900">
+                Categorias que bombam
               </h3>
               <Link
                 href="/c"
@@ -269,7 +306,7 @@ export default async function Home() {
                 <Link
                   key={category.slug}
                   href={`/c/${category.slug}`}
-                  className="group rounded-3xl border border-white/60 bg-white/70 px-5 py-4 text-sm text-slate-600 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  className="group rounded-3xl border border-white/60 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                 >
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
                     Categoria
@@ -278,7 +315,7 @@ export default async function Home() {
                     {category.name}
                   </h4>
                   <p className="mt-1 text-xs text-slate-500">
-                    {category.count} ofertas
+                    {category.count} ofertas ativas
                   </p>
                 </Link>
               ))}
@@ -312,7 +349,7 @@ export default async function Home() {
                   <Link
                     key={collection.id}
                     href={`/listas/${collection.slug}`}
-                    className="group rounded-3xl border border-white/70 bg-white/80 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                    className="group rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -329,7 +366,7 @@ export default async function Home() {
                     </div>
                     <p className="mt-3 text-sm text-slate-600">
                       {collection.description ||
-                        "Seleção pronta para compartilhar com seu público."}
+                        "Seleção pronta para comprar sem perder tempo."}
                     </p>
                     <div className="mt-4 flex -space-x-4">
                       {previewImages.length > 0
@@ -355,15 +392,19 @@ export default async function Home() {
           </section>
         ) : null}
 
+        <div id="ofertas" className="pt-4" />
+
         {featured.length > 0 ? (
           <section className="mt-12">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-2xl font-semibold text-slate-900">
-                Destaques da vitrine
-              </h3>
-              <p className="text-xs text-slate-500">
-                Curadoria premium para compartilhar agora.
-              </p>
+              <div>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Destaques imperdíveis
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Promoções com maior potencial de economia.
+                </p>
+              </div>
             </div>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {featured.map((product) => (
@@ -376,12 +417,14 @@ export default async function Home() {
         {exclusives.length > 0 ? (
           <section className="mt-12">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-2xl font-semibold text-slate-900">
-                Listas exclusivas
-              </h3>
-              <p className="text-xs text-slate-500">
-                Ofertas que você não encontra em qualquer lugar.
-              </p>
+              <div>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Ofertas exclusivas
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Seleções raras para quem gosta de vantagem.
+                </p>
+              </div>
             </div>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {exclusives.map((product) => (
@@ -394,12 +437,14 @@ export default async function Home() {
         {trending.length > 0 ? (
           <section className="mt-12">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-2xl font-semibold text-slate-900">
-                Em alta agora
-              </h3>
-              <p className="text-xs text-slate-500">
-                Produtos mais comentados do momento.
-              </p>
+              <div>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Em alta agora
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Produtos que estão bombando hoje.
+                </p>
+              </div>
             </div>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {trending.map((product) => (
@@ -412,12 +457,14 @@ export default async function Home() {
         {hot.length > 0 ? (
           <section className="mt-12">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <h3 className="text-2xl font-semibold text-slate-900">
-                Mais procurados
-              </h3>
-              <p className="text-xs text-slate-500">
-                Os queridinhos que mais geram cliques.
-              </p>
+              <div>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Mais procurados
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Itens mais desejados da semana.
+                </p>
+              </div>
             </div>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {hot.map((product) => (
@@ -429,10 +476,14 @@ export default async function Home() {
 
         <section className="mt-12">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h3 className="text-2xl font-semibold text-slate-900">
-              Novidades da semana
-            </h3>
-            <p className="text-xs text-slate-500">Atualizadas para vender.</p>
+            <div>
+              <h3 className="text-2xl font-semibold text-slate-900">
+                Novidades da semana
+              </h3>
+              <p className="text-xs text-slate-500">
+                Atualizadas para você aproveitar primeiro.
+              </p>
+            </div>
           </div>
           <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {latest.length === 0 ? (
@@ -444,6 +495,32 @@ export default async function Home() {
                 <ProductCard key={product.id} product={product} />
               ))
             )}
+          </div>
+        </section>
+
+        <section className="mt-16 rounded-[32px] border border-white/80 bg-white/90 p-10 text-center shadow-sm">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+            Pronto para economizar?
+          </p>
+          <h3 className="mt-3 text-3xl font-semibold text-slate-900">
+            Explore as melhores ofertas agora mesmo
+          </h3>
+          <p className="mt-3 text-sm text-slate-600">
+            Nossa equipe atualiza diariamente para você comprar com confiança.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link
+              href="#ofertas"
+              className="rounded-full bg-slate-900 px-6 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Ver ofertas
+            </Link>
+            <Link
+              href="/c"
+              className="rounded-full border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+            >
+              Ver categorias
+            </Link>
           </div>
         </section>
       </main>

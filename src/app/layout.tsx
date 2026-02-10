@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
@@ -13,8 +13,8 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Catálogo de Afiliados",
-  description: "Vitrine de produtos com links de afiliados.",
+  title: "Vitrine de Promoções",
+  description: "Ofertas reais selecionadas para você economizar.",
 };
 
 export default function RootLayout({
