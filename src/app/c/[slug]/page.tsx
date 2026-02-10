@@ -1,8 +1,8 @@
 ﻿import Link from "next/link";
-import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/slugify";
 import { ProductCard } from "@/components/ProductCard";
+import { CATEGORY_OPTIONS } from "@/lib/categories";
 import type { Product } from "@/lib/types";
 
 export const revalidate = 60;
@@ -29,11 +29,12 @@ export default async function CategoryPage({ params }: PageProps) {
     return slugify(product.category) === params.slug;
   });
 
-  if (filtered.length === 0) {
-    notFound();
-  }
-
-  const categoryName = filtered[0].category ?? "Categoria";
+  const knownCategory =
+    CATEGORY_OPTIONS.find((category) => slugify(category) === params.slug) ??
+    null;
+  const fallbackName = params.slug.replace(/-/g, " ");
+  const categoryName =
+    filtered[0]?.category ?? knownCategory ?? fallbackName ?? "Categoria";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-6 py-10">
@@ -52,9 +53,15 @@ export default async function CategoryPage({ params }: PageProps) {
         </p>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filtered.length === 0 ? (
+            <div className="col-span-full rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+              Nenhuma oferta publicada nesta categoria ainda.
+            </div>
+          ) : (
+            filtered.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
       </div>
     </div>

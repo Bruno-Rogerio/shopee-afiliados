@@ -57,6 +57,31 @@ const sortOptions = [
   { value: "price-desc", label: "Maior preço" },
 ];
 
+const categoryAccents = [
+  { bg: "bg-amber-100 text-amber-700", ring: "ring-amber-200" },
+  { bg: "bg-emerald-100 text-emerald-700", ring: "ring-emerald-200" },
+  { bg: "bg-sky-100 text-sky-700", ring: "ring-sky-200" },
+  { bg: "bg-rose-100 text-rose-700", ring: "ring-rose-200" },
+  { bg: "bg-orange-100 text-orange-700", ring: "ring-orange-200" },
+  { bg: "bg-teal-100 text-teal-700", ring: "ring-teal-200" },
+  { bg: "bg-lime-100 text-lime-700", ring: "ring-lime-200" },
+  { bg: "bg-slate-100 text-slate-700", ring: "ring-slate-200" },
+];
+
+function getCategoryBadge(name: string) {
+  const words = name.split(/[\s,&/]+/).filter(Boolean);
+  const initials = words.slice(0, 2).map((word) => word[0]).join("");
+  return initials.toUpperCase() || name.slice(0, 2).toUpperCase();
+}
+
+function getCategoryAccent(slug: string) {
+  const hash = Array.from(slug).reduce(
+    (total, char) => total + char.charCodeAt(0),
+    0
+  );
+  return categoryAccents[hash % categoryAccents.length];
+}
+
 function sortByRank(list: Product[], key: RankKey) {
   return [...list].sort((a, b) => {
     const aRank = a[key];
@@ -175,6 +200,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const products = (productsData ?? []) as Product[];
   const categories = buildCategories(products);
   const topCategories = categories.slice(0, 10);
+  const quickCategories = topCategories.slice(0, 8);
   const featured = sortByRank(
     products.filter((product) => product.is_featured),
     "featured_rank"
@@ -346,6 +372,41 @@ export default async function Home({ searchParams }: HomeProps) {
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
+        {quickCategories.length > 0 ? (
+          <section className="mb-8 rounded-3xl border border-white/70 bg-white/80 px-6 py-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Atalhos por categoria
+              </p>
+              <Link
+                href="/c"
+                className="text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+              >
+                Ver todas
+              </Link>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quickCategories.map((category) => {
+                const accent = getCategoryAccent(category.slug);
+                return (
+                  <Link
+                    key={category.slug}
+                    href={buildFilterHref({ cat: category.slug })}
+                    className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                  >
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ring-1 ${accent.bg} ${accent.ring}`}
+                    >
+                      {getCategoryBadge(category.name)}
+                    </span>
+                    {category.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
         <section className="relative overflow-hidden rounded-[40px] border border-white/80 bg-white/80 p-10 shadow-lg backdrop-blur">
           <div className="absolute -right-12 -top-10 h-48 w-48 rounded-full bg-amber-200/40 blur-3xl" />
           <div className="absolute -bottom-20 left-10 h-56 w-56 rounded-full bg-indigo-200/30 blur-3xl" />
@@ -497,23 +558,35 @@ export default async function Home({ searchParams }: HomeProps) {
               </Link>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {topCategories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/c/${category.slug}`}
-                  className="group rounded-3xl border border-white/60 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    Categoria
-                  </p>
-                  <h4 className="mt-2 text-lg font-semibold text-slate-900">
-                    {category.name}
-                  </h4>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {category.count} ofertas ativas
-                  </p>
-                </Link>
-              ))}
+              {topCategories.map((category) => {
+                const accent = getCategoryAccent(category.slug);
+                return (
+                  <Link
+                    key={category.slug}
+                    href={`/c/${category.slug}`}
+                    className="group rounded-3xl border border-white/60 bg-white/80 px-5 py-4 text-sm text-slate-600 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex h-11 w-11 items-center justify-center rounded-2xl text-xs font-semibold ring-1 ${accent.bg} ${accent.ring}`}
+                      >
+                        {getCategoryBadge(category.name)}
+                      </span>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                          Categoria
+                        </p>
+                        <h4 className="mt-1 text-lg font-semibold text-slate-900">
+                          {category.name}
+                        </h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {category.count} ofertas ativas
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ) : null}
@@ -657,7 +730,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   {products.length}
                 </span>
               </Link>
-              {categories.map((category) => (
+              {topCategories.map((category) => (
                 <Link
                   key={category.slug}
                   href={buildFilterHref({ cat: category.slug })}
