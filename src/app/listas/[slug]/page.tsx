@@ -17,6 +17,7 @@ export default async function CollectionPage({ params }: PageProps) {
         .from("collections")
         .select("id, name, slug, description, is_active")
         .eq("slug", params.slug)
+        .eq("is_active", true)
         .single()
     : { data: null };
 

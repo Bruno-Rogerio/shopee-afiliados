@@ -203,6 +203,35 @@ export default async function Home({ searchParams }: HomeProps) {
     typeof searchParams?.price === "string" ? searchParams.price : "all";
   const selectedSort =
     typeof searchParams?.sort === "string" ? searchParams.sort : "recent";
+  const hasFilters =
+    Boolean(query) ||
+    selectedCategory !== "all" ||
+    selectedPrice !== "all" ||
+    selectedSort !== "recent";
+
+  const buildFilterHref = (
+    overrides: Partial<{
+      q: string;
+      cat: string;
+      price: string;
+      sort: string;
+    }> = {}
+  ) => {
+    const next = {
+      q: query,
+      cat: selectedCategory,
+      price: selectedPrice,
+      sort: selectedSort,
+      ...overrides,
+    };
+    const params = new URLSearchParams();
+    if (next.q) params.set("q", next.q);
+    if (next.cat && next.cat !== "all") params.set("cat", next.cat);
+    if (next.price && next.price !== "all") params.set("price", next.price);
+    if (next.sort && next.sort !== "recent") params.set("sort", next.sort);
+    const queryString = params.toString();
+    return queryString ? `/?${queryString}#explorar` : "/#explorar";
+  };
 
   const filteredProducts = sortByFilter(
     products.filter((product) => {
@@ -583,60 +612,135 @@ export default async function Home({ searchParams }: HomeProps) {
                 Explore todas as ofertas
               </h3>
               <p className="text-xs text-slate-500">
-                Use filtros para encontrar o que precisa.
+                Use filtros rápidos para achar exatamente o que procura.
               </p>
             </div>
+            {hasFilters ? (
+              <Link
+                href="/#explorar"
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+              >
+                Limpar filtros
+              </Link>
+            ) : null}
           </div>
 
-          <form className="mt-6 grid gap-3 rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
-            <input
-              type="text"
-              name="q"
-              defaultValue={query}
-              placeholder="Buscar produto"
-              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
-            />
-            <select
-              name="cat"
-              defaultValue={selectedCategory}
-              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
-            >
-              <option value="all">Todas as categorias</option>
+          <div className="mt-6 rounded-3xl border border-white/70 bg-white/90 p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Categorias rápidas
+              </p>
+              <Link
+                href="/c"
+                className="text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+              >
+                Ver todas as categorias
+              </Link>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href={buildFilterHref({ cat: "all" })}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  selectedCategory === "all"
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                }`}
+              >
+                Todas
+                <span
+                  className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${
+                    selectedCategory === "all"
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {products.length}
+                </span>
+              </Link>
               {categories.map((category) => (
-                <option key={category.slug} value={category.slug}>
+                <Link
+                  key={category.slug}
+                  href={buildFilterHref({ cat: category.slug })}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    selectedCategory === category.slug
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                  }`}
+                >
                   {category.name}
-                </option>
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${
+                      selectedCategory === category.slug
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {category.count}
+                  </span>
+                </Link>
               ))}
-            </select>
-            <select
-              name="price"
-              defaultValue={selectedPrice}
-              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            </div>
+
+            <form
+              className="mt-5 flex flex-wrap gap-3"
+              method="get"
             >
-              {priceRanges.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
-            <select
-              name="sort"
-              defaultValue={selectedSort}
-              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="rounded-2xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Filtrar
-            </button>
-          </form>
+              <input
+                type="text"
+                name="q"
+                defaultValue={query}
+                placeholder="Buscar produto"
+                className="min-w-[220px] flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+              />
+              <select
+                name="cat"
+                defaultValue={selectedCategory}
+                className="min-w-[200px] flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+              >
+                <option value="all">Todas as categorias</option>
+                {categories.map((category) => (
+                  <option key={category.slug} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="price"
+                defaultValue={selectedPrice}
+                className="min-w-[180px] flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+              >
+                {priceRanges.map((range) => (
+                  <option key={range.value} value={range.value}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="sort"
+                defaultValue={selectedSort}
+                className="min-w-[180px] flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="w-full rounded-2xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+              >
+                Filtrar
+              </button>
+            </form>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <span>{filteredProducts.length} ofertas encontradas.</span>
+              {hasFilters ? (
+                <span>Filtros ativos na vitrine.</span>
+              ) : null}
+            </div>
+          </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredProducts.length === 0 ? (

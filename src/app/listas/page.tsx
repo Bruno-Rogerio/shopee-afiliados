@@ -53,10 +53,16 @@ export default async function CollectionsPage() {
     itemsByCollection.set(item.collection_id, existing);
   });
 
-  const collections: CollectionWithItems[] = baseCollections.map((collection) => ({
-    ...collection,
-    items: itemsByCollection.get(collection.id) ?? [],
-  }));
+  const collections: CollectionWithItems[] = baseCollections
+    .map((collection) => ({
+      ...collection,
+      items: itemsByCollection.get(collection.id) ?? [],
+    }))
+    .filter((collection) => collection.items.length > 0);
+  const totalItems = collections.reduce(
+    (sum, collection) => sum + collection.items.length,
+    0
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-6 py-10">
@@ -73,7 +79,7 @@ export default async function CollectionsPage() {
               Listas especiais
             </h1>
             <p className="mt-2 text-sm text-slate-600">
-              {collections.length} listas prontas para compartilhar.
+              {collections.length} listas publicadas · {totalItems} ofertas.
             </p>
           </div>
         </div>
@@ -81,7 +87,7 @@ export default async function CollectionsPage() {
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           {collections.length === 0 ? (
             <div className="col-span-full rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
-              Nenhuma lista criada ainda.
+              Nenhuma lista publicada ainda.
             </div>
           ) : (
             collections.map((collection) => {

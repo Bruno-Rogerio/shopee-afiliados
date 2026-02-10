@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useState } from "react";
 import Papa from "papaparse";
@@ -39,7 +39,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "EletrÃ´nicos",
+    category: "Eletrônicos",
     keywords: [
       "fone",
       "headset",
@@ -58,7 +58,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "EletrodomÃ©sticos",
+    category: "Eletrodomésticos",
     keywords: [
       "airfryer",
       "air fryer",
@@ -72,6 +72,60 @@ const categoryRules: { category: string; keywords: string[] }[] = [
       "aspirador",
       "ventilador",
       "batedeira",
+    ],
+  },
+  {
+    category: "Bijoux",
+    keywords: [
+      "biju",
+      "bijoux",
+      "bijuteria",
+      "colar",
+      "brinco",
+      "anel",
+      "pulseira",
+      "choker",
+      "pingente",
+      "semijoia",
+      "semi joia",
+    ],
+  },
+  {
+    category: "Fitness",
+    keywords: [
+      "fitness",
+      "treino",
+      "academia",
+      "exercicio",
+      "yoga",
+      "pilates",
+      "halter",
+      "peso",
+      "elastico",
+      "resistencia",
+      "esteira",
+      "bicicleta",
+      "ergometrica",
+      "colchonete",
+      "tapete yoga",
+    ],
+  },
+  {
+    category: "Cama, mesa e banho",
+    keywords: [
+      "cama",
+      "mesa",
+      "banho",
+      "banheiro",
+      "lençol",
+      "lencol",
+      "toalha",
+      "edredom",
+      "cobertor",
+      "fronha",
+      "travesseiro",
+      "jogo de cama",
+      "jogo de toalha",
     ],
   },
   {
@@ -142,7 +196,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Casa e decoraÃ§Ã£o",
+    category: "Casa e decoração",
     keywords: [
       "decor",
       "decoracao",
@@ -153,9 +207,6 @@ const categoryRules: { category: string; keywords: string[] }[] = [
       "vaso",
       "quadro",
       "organizador",
-      "cama",
-      "mesa",
-      "banheiro",
       "cozinha",
     ],
   },
@@ -174,7 +225,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "AutomÃ³veis",
+    category: "Automóveis",
     keywords: [
       "carro",
       "automotivo",
@@ -187,7 +238,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Beleza e saÃºde",
+    category: "Beleza e saúde",
     keywords: [
       "beleza",
       "skin",
@@ -688,3 +739,5 @@ export default function AdminImportPage() {
     </div>
   );
 }
+
+
