@@ -12,6 +12,7 @@ type PageProps = {
 };
 
 export default async function CategoryPage({ params }: PageProps) {
+  const slugParam = typeof params?.slug === "string" ? params.slug : "";
   const supabase = createServerClient();
   const { data } = supabase
     ? await supabase
@@ -26,13 +27,13 @@ export default async function CategoryPage({ params }: PageProps) {
   const products = (data ?? []) as Product[];
   const filtered = products.filter((product) => {
     if (!product.category) return false;
-    return slugify(product.category) === params.slug;
+    return slugify(product.category) === slugParam;
   });
 
   const knownCategory =
-    CATEGORY_OPTIONS.find((category) => slugify(category) === params.slug) ??
+    CATEGORY_OPTIONS.find((category) => slugify(category) === slugParam) ??
     null;
-  const fallbackName = params.slug.replace(/-/g, " ");
+  const fallbackName = slugParam ? slugParam.replace(/-/g, " ") : "Categoria";
   const categoryName =
     filtered[0]?.category ?? knownCategory ?? fallbackName ?? "Categoria";
 
