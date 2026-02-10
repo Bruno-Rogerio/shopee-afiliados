@@ -129,6 +129,19 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
+    category: "Brinquedos",
+    keywords: [
+      "brinquedo",
+      "lego",
+      "boneca",
+      "carrinho",
+      "jogo",
+      "puzzle",
+      "pelucia",
+      "playset",
+    ],
+  },
+  {
     category: "Casa e decoração",
     keywords: [
       "decor",

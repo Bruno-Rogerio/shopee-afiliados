@@ -10,6 +10,7 @@
   "Moda Feminina",
   "Moda Infantil",
   "Bebe e Maternidade",
+  "Brinquedos",
   "Games",
   "Produtos de Limpeza",
   "Alimentos",
