@@ -39,7 +39,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Eletrônicos",
+    category: "EletrÃ´nicos",
     keywords: [
       "fone",
       "headset",
@@ -58,7 +58,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Eletrodomésticos",
+    category: "EletrodomÃ©sticos",
     keywords: [
       "airfryer",
       "air fryer",
@@ -117,7 +117,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
       "mesa",
       "banho",
       "banheiro",
-      "lençol",
+      "lenÃ§ol",
       "lencol",
       "toalha",
       "edredom",
@@ -196,7 +196,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Casa e decoração",
+    category: "Casa e decoraÃ§Ã£o",
     keywords: [
       "decor",
       "decoracao",
@@ -225,7 +225,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Automóveis",
+    category: "AutomÃ³veis",
     keywords: [
       "carro",
       "automotivo",
@@ -238,7 +238,7 @@ const categoryRules: { category: string; keywords: string[] }[] = [
     ],
   },
   {
-    category: "Beleza e saúde",
+    category: "Beleza e saÃºde",
     keywords: [
       "beleza",
       "skin",
