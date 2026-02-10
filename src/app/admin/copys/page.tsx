@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getOriginalPrice, parsePriceText } from "@/lib/pricing";
 import { getProductImages } from "@/lib/images";
 import { slugify } from "@/lib/slugify";
+import { CATEGORY_OPTIONS } from "@/lib/categories";
 import type { CopyVariant, Product } from "@/lib/types";
 
 type LinkMode = "out" | "affiliate";
@@ -269,14 +270,21 @@ export default function AdminCopysPage() {
   const [tone, setTone] = useState<CopyTone>("enthusiastic");
   const [urgency, setUrgency] = useState<CopyUrgency>("medium");
   const [filter, setFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   const filteredProducts = useMemo(() => {
-    if (!filter.trim()) return products;
-    const term = filter.toLowerCase();
-    return products.filter((product) =>
-      product.title.toLowerCase().includes(term)
-    );
-  }, [products, filter]);
+    const term = filter.trim().toLowerCase();
+    return products.filter((product) => {
+      const matchesTerm = term
+        ? product.title.toLowerCase().includes(term)
+        : true;
+      const matchesCategory =
+        categoryFilter === "all"
+          ? true
+          : (product.category ?? "") === categoryFilter;
+      return matchesTerm && matchesCategory;
+    });
+  }, [products, filter, categoryFilter]);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === selectedId) ?? null,
@@ -370,7 +378,7 @@ export default function AdminCopysPage() {
           <p className="mt-6 text-sm text-slate-500">Carregando produtos...</p>
         ) : (
           <div className="mt-6 grid gap-4">
-            <div className="grid gap-3 lg:grid-cols-[1.2fr_repeat(4,_minmax(180px,_1fr))_auto]">
+            <div className="grid gap-3 lg:grid-cols-[1.1fr_220px_repeat(4,_minmax(180px,_1fr))_auto]">
               <input
                 type="text"
                 value={filter}
@@ -378,6 +386,18 @@ export default function AdminCopysPage() {
                 placeholder="Buscar produto"
                 className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
               />
+              <select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+              >
+                <option value="all">Todas as categorias</option>
+                {CATEGORY_OPTIONS.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
               <select
                 value={linkMode}
                 onChange={(event) => setLinkMode(event.target.value as LinkMode)}
