@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type ProductCarouselProps = {
   images: string[];
@@ -18,6 +18,11 @@ export function ProductCarousel({
     [images]
   );
   const [index, setIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const total = validImages.length;
   const current = total > 0 ? validImages[index % total] : "";
@@ -48,7 +53,7 @@ export function ProductCarousel({
         </div>
       )}
 
-      {total > 1 ? (
+      {mounted && total > 1 ? (
         <>
           <button
             type="button"
