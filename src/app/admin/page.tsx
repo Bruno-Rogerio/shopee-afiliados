@@ -66,6 +66,9 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "published" | "draft"
   >("all");
+  const [categoryFilter, setCategoryFilter] = useState<
+    "all" | "uncategorized"
+  >("all");
   const [bulkCategory, setBulkCategory] = useState("");
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -81,6 +84,10 @@ export default function AdminProductsPage() {
       list = list.filter((product) => product.is_active);
     } else if (statusFilter === "draft") {
       list = list.filter((product) => !product.is_active);
+    }
+
+    if (categoryFilter === "uncategorized") {
+      list = list.filter((product) => !product.category);
     }
 
     const term = searchQuery.trim().toLowerCase();
@@ -105,13 +112,17 @@ export default function AdminProductsPage() {
         tags
       );
     });
-  }, [products, statusFilter, searchQuery]);
+  }, [products, statusFilter, categoryFilter, searchQuery]);
 
   const publishedCount = useMemo(
     () => products.filter((product) => product.is_active).length,
     [products]
   );
   const draftCount = products.length - publishedCount;
+  const uncategorizedCount = useMemo(
+    () => products.filter((product) => !product.category).length,
+    [products]
+  );
 
   const allSelected =
     filteredProducts.length > 0 &&
@@ -899,6 +910,21 @@ export default function AdminProductsPage() {
                 }`}
               >
                 Rascunhos ({draftCount})
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setCategoryFilter((prev) =>
+                    prev === "uncategorized" ? "all" : "uncategorized"
+                  )
+                }
+                className={`rounded-full px-3 py-1.5 transition ${
+                  categoryFilter === "uncategorized"
+                    ? "bg-amber-500 text-white"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                Sem categoria ({uncategorizedCount})
               </button>
             </div>
             <button
