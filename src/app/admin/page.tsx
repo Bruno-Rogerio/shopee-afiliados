@@ -62,6 +62,7 @@ export default function AdminProductsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "published" | "draft"
   >("all");
@@ -74,14 +75,37 @@ export default function AdminProductsPage() {
   const isEditing = Boolean(form.id);
 
   const filteredProducts = useMemo(() => {
+    let list = products;
+
     if (statusFilter === "published") {
-      return products.filter((product) => product.is_active);
+      list = list.filter((product) => product.is_active);
+    } else if (statusFilter === "draft") {
+      list = list.filter((product) => !product.is_active);
     }
-    if (statusFilter === "draft") {
-      return products.filter((product) => !product.is_active);
-    }
-    return products;
-  }, [products, statusFilter]);
+
+    const term = searchQuery.trim().toLowerCase();
+    if (!term) return list;
+
+    return list.filter((product) => {
+      const title = product.title?.toLowerCase() ?? "";
+      const slug = product.slug?.toLowerCase() ?? "";
+      const store = product.store_name?.toLowerCase() ?? "";
+      const category = product.category?.toLowerCase() ?? "";
+      const price = product.price_text?.toLowerCase() ?? "";
+      const tags = (product.tags ?? []).some((tag) =>
+        tag.toLowerCase().includes(term)
+      );
+
+      return (
+        title.includes(term) ||
+        slug.includes(term) ||
+        store.includes(term) ||
+        category.includes(term) ||
+        price.includes(term) ||
+        tags
+      );
+    });
+  }, [products, statusFilter, searchQuery]);
 
   const publishedCount = useMemo(
     () => products.filter((product) => product.is_active).length,
@@ -835,6 +859,13 @@ export default function AdminProductsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Buscar produto"
+              className="w-full min-w-[220px] rounded-full border border-slate-200 px-4 py-2 text-xs text-slate-600 focus:border-slate-400 focus:outline-none sm:w-auto"
+            />
             <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600">
               <button
                 type="button"
