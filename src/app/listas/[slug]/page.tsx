@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ProductCard } from "@/components/ProductCard";
 import { slugify } from "@/lib/slugify";
 import type { Collection, CollectionItem, Product } from "@/lib/types";
@@ -12,7 +13,9 @@ type PageProps = {
 
 export default async function CollectionPage({ params }: PageProps) {
   const slugParam = typeof params?.slug === "string" ? params.slug.trim() : "";
-  const supabase = createServerClient();
+  const publicClient = createServerClient();
+  const adminClient = createAdminClient();
+  const supabase = adminClient ?? publicClient;
   let collectionData: Collection | null = null;
 
   if (supabase && slugParam) {

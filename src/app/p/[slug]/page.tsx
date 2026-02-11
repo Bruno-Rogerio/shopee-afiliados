@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveProductUrl } from "@/lib/linkResolver";
 import { getProductImages } from "@/lib/images";
 import { getOriginalPrice } from "@/lib/pricing";
@@ -15,7 +16,9 @@ type PageProps = {
 
 export default async function ProductPage({ params }: PageProps) {
   const slugParam = typeof params?.slug === "string" ? params.slug.trim() : "";
-  const supabase = createServerClient();
+  const publicClient = createServerClient();
+  const adminClient = createAdminClient();
+  const supabase = adminClient ?? publicClient;
   let productData: Product | null = null;
 
   if (supabase && slugParam) {
