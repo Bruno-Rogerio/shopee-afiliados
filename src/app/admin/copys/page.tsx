@@ -343,8 +343,24 @@ export default function AdminCopysPage() {
   };
 
   const handleCopy = async (content: string) => {
-    await navigator.clipboard.writeText(content);
-    setMessage("Copiado para a área de transferência.");
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(content);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = content;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setMessage("Copiado para a área de transferência.");
+    } catch {
+      setError("Nao foi possivel copiar. Tente novamente.");
+    }
   };
 
   const showDraftWarning =
@@ -531,8 +547,20 @@ export default function AdminCopysPage() {
               <button
                 type="button"
                 onClick={() => handleCopy(copy.content)}
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
               >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="3" />
+                  <rect x="2" y="2" width="13" height="13" rx="3" />
+                </svg>
                 Copiar
               </button>
             </div>
