@@ -74,9 +74,21 @@ const emojiTags: { keys: string[]; emoji: string }[] = [
   { keys: ["audio", "som", "fone"], emoji: "🎧" },
 ];
 
-const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+function getBaseUrl() {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim();
+  if (!raw) return "";
+  const normalized = raw.replace(/\/$/, "");
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+    return normalized;
+  }
+  return `https://${normalized}`;
+}
 
 function buildInternalLink(path: string) {
+  const baseUrl = getBaseUrl();
   return baseUrl ? `${baseUrl}${path}` : path;
 }
 
